@@ -1,0 +1,8 @@
+{
+	"version": "1.0.b12",
+	"buildDate": "2018/11/12",
+	"urls": {
+		"OWFServer": "https://localhost:8443/owf"
+	},
+	"roles": ["role1", "role2"]
+}

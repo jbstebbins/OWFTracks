@@ -1,4 +1,6 @@
 <ag-grid-angular #agGridCot class="ag-theme-balham" [rowData]="rowData"
-    [columnDefs]="columnDefinitions" [domLayout]="domLayout"
+    [columnDefs]="columnDefinitions" [domLayout]="domLayout" [getRowNodeId]="getRowNodeId"
+    [pagination]="true" 
+    [paginationPageSize]="paginationPageSize" [suppressScrollOnNewData]="true"
     (gridReady)="onGridReady($event)" (firstDataRendered)="onFirstDataRendered($event)">
 </ag-grid-angular>

@@ -2,8 +2,11 @@
 	"version": "1.0.b12",
 	"buildDate": "2018/11/12",
 	"urls": {
-		"OWFServer": "https://localhost:8443/owf",
-		"CotService": "https://localhost:8443/CotProviderSVC/rest/cotdummy/25",
+		"RefreshRate": "30000",
+		"OWFServer": "https://10.10.30.178:8443/owf",
+		"CotServiceActive": "CotServerLocal",
+		"CotServiceProd": "",
+		"CotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy/25",
 		"CotServerLocal": "assets/testdata/testfile.json"
 	},
 	"roles": ["role1", "role2"]

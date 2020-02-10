@@ -23,9 +23,8 @@ declare var Ozone: any;
   providedIn: 'root'
 })
 export class CotMinotaurService {
-  //trackUrl: string = 'https://localhost:4200/assets/testdata/testfile.json';
-  //trackUrl: string = 'https://localhost:8443/CotProviderSVC/rest/cotdummy/25';
   trackUrl: string = '';
+  trackRefreshRate: number = 30000;
   trackData: CotTrackModel = null;
   configReady: boolean = false;
   config: ConfigModel = null;
@@ -35,7 +34,11 @@ export class CotMinotaurService {
     private mapMessageService: MapMessagesService
   ) {
     this.config = this.configService.getConfig();
-    this.trackUrl = this.config.urls["CotService"];
+
+    this.trackRefreshRate = this.config.urls["RefreshRate"];
+
+    let trackLevel:string = this.config.urls["CotServiceActive"];
+    this.trackUrl = this.config.urls[trackLevel];
   }
 
   getCotTracks(): Observable<any> {

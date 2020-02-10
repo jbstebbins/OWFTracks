@@ -30,13 +30,17 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   trackData: any = [];
 
   @ViewChild('agGridCot') agGrid: AgGridAngular;
+  gridApi;
+  gridColumnApi;
   gridOptions: GridOptions;
   columnDefinitions: any = [];
+  paginationPageSize: 25;
 
   rowData: any[] = [];
   cacheRowData: any[] = [];
 
   domLayout = "autoHeight";
+  getRowNodeId;
 
   constructor(private configService: ConfigService,
     private cotMinotaurSerice: CotMinotaurService,
@@ -48,6 +52,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         componentParent: this
       },
       pagination: true
+    };
+
+    this.getRowNodeId = function (data) {
+      return data.id;
     };
   }
 
@@ -67,7 +75,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
     // start the refresh using timeout
     setTimeout(() => {
-      interval(5000).pipe(
+      interval(30000).pipe(
         startWith(0),
         switchMap(() => this.cotMinotaurSerice.getCotTracks())
       ).subscribe(response => {
@@ -117,7 +125,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       let addRows: any[] = [], updateRows: any[] = [], deleteRows: any[] = [];
 
       response.features.forEach(value => {
-        if (this.cacheRowData.indexOf(value.id)) {
+        if (this.cacheRowData.indexOf(value.id) >= 0) {
           updateRows.push({
             id: value.id,
             featureType: value.geometry.type,
@@ -163,6 +171,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
   private createColumnDefs() {
     this.columnDefinitions = [
+      { field: 'id', hide: true },
       { field: 'featureType', sortable: true },
       { field: 'name', sortable: true, filterable: true },
       { field: 'type', sortable: true, filterable: true },
@@ -182,12 +191,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
     return this.columnDefinitions;
   }
 
-  onGridReady(event) {
-    console.log(event);
-    this.agGrid.gridOptions.getRowNodeId = function(data) {
-      console.log(data.id);
-      return data.id;
-    }
+  onGridReady(params) {
+    console.log(params);
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
   }
 
   onFirstDataRendered(params) {

@@ -1,0 +1,714 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "ad4f0927-e1c3-4275-bdf6-caf6659d9ae2",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    20.636394821652907,
+                    48.23153870347315
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "767461",
+                "type": "AIR TRACK",
+                "fid": "ad4f0927-e1c3-4275-bdf6-caf6659d9ae2",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 497.93,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 4.4436,
+                "course": 241.59,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "dd683e1e-8f05-4e72-a3ea-21b6b4494405",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -69.24163186912814,
+                    -160.53345046609502
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "970217",
+                "type": "AIR TRACK",
+                "fid": "dd683e1e-8f05-4e72-a3ea-21b6b4494405",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 215.47,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 3.8572,
+                "course": 307.92,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "df2c9830-e996-4208-85ff-69a71248d740",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -42.03965109199941,
+                    -73.61761021000933
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "477364",
+                "type": "GROUND TRACK",
+                "fid": "df2c9830-e996-4208-85ff-69a71248d740",
+                "class": null,
+                "category": "LND",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 83.577,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 12.692,
+                "course": 85.783,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "94bae7cb-1448-42ea-80be-ef1267c3c05d",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -0.34620927382566125,
+                    -56.764903276604805
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "582800",
+                "type": "UFO",
+                "fid": "94bae7cb-1448-42ea-80be-ef1267c3c05d",
+                "class": null,
+                "category": "UFO",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 3991.7,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 550.26,
+                "course": 136.69,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "7f85b062-dbd6-4c1c-9df4-a46e47577e50",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -65.69029851377356,
+                    113.2467807386443
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "048390",
+                "type": "MISSLE TRACK",
+                "fid": "7f85b062-dbd6-4c1c-9df4-a46e47577e50",
+                "class": null,
+                "category": "MSL",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 2366.2,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 856.42,
+                "course": 0.00,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "924a2b80-f020-4a26-8c95-e2823d0d0468",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    55.9412751061388,
+                    97.5140688589697
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "848374",
+                "type": "MISSLE TRACK",
+                "fid": "924a2b80-f020-4a26-8c95-e2823d0d0468",
+                "class": null,
+                "category": "MSL",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 1955.6,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 31.159,
+                "course": 0.00,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "cb20a4b8-acd9-4513-aa1d-50bf34a1aa07",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    28.720853829627302,
+                    -125.9278414556086
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "026877",
+                "type": "GROUND TRACK",
+                "fid": "cb20a4b8-acd9-4513-aa1d-50bf34a1aa07",
+                "class": null,
+                "category": "LND",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 58.137,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 3.0178,
+                "course": 163.96,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "7cce770f-654c-4216-9db4-52ea7630f318",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    71.38249118387802,
+                    104.3577836038957
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "705727",
+                "type": "SEA SURFACE TRACK",
+                "fid": "7cce770f-654c-4216-9db4-52ea7630f318",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 41.896,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 0.5180,
+                "course": 41.069,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "686a80f6-4140-404f-823d-3e13493c95de",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -5.824639765689821,
+                    171.04427046105798
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "920202",
+                "type": "AIR TRACK",
+                "fid": "686a80f6-4140-404f-823d-3e13493c95de",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 739.01,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 51.932,
+                "course": 311.43,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "98a32c77-e6fa-4c69-86a1-7c37a3f9aa86",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    27.26041172358342,
+                    101.64499752099877
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "290440",
+                "type": "SEA SURFACE TRACK",
+                "fid": "98a32c77-e6fa-4c69-86a1-7c37a3f9aa86",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 44.686,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 0.0487,
+                "course": 77.225,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "69a30509-2fcb-4660-8fd8-27e80c8c24c2",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -40.81101368971445,
+                    -112.67235875972628
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "923244",
+                "type": "SEA SURFACE TRACK",
+                "fid": "69a30509-2fcb-4660-8fd8-27e80c8c24c2",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 3.3752,
+                "dtg": "2020-02-09T08:22:21.337Z",
+                "altitude": 0.6287,
+                "course": 214.37,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "6bc99eca-d06c-4169-8c29-47560f37ded7",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    90.1049306066966,
+                    -49.56748965615067
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "466963",
+                "type": "SEA SURFACE TRACK",
+                "fid": "6bc99eca-d06c-4169-8c29-47560f37ded7",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 35.119,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 0.2489,
+                "course": 120.14,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "f6c65413-aa49-4a46-a637-5f4e1ca0c9f3",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -78.26986787870457,
+                    -78.62841164679543
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "477451",
+                "type": "AIR TRACK",
+                "fid": "f6c65413-aa49-4a46-a637-5f4e1ca0c9f3",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 193.08,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 27.243,
+                "course": 169.63,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "58ca3e4f-5409-4ec7-8eac-b7bcb32e31bf",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -10.551048801822986,
+                    -110.94784155023628
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "612806",
+                "type": "AIR TRACK",
+                "fid": "58ca3e4f-5409-4ec7-8eac-b7bcb32e31bf",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 151.16,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 9.2281,
+                "course": 231.19,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "2771ab00-352c-4add-ab73-53dfdefa8a9f",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -10.382081020021758,
+                    -15.67667797440013
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "899161",
+                "type": "SEA SURFACE TRACK",
+                "fid": "2771ab00-352c-4add-ab73-53dfdefa8a9f",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 49.041,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 0.6281,
+                "course": 271.75,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "99fcd5a9-2a5c-4cb4-9aa6-01b41e36e983",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    49.743101420542466,
+                    -77.0810462364319
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "707879",
+                "type": "AIR TRACK",
+                "fid": "99fcd5a9-2a5c-4cb4-9aa6-01b41e36e983",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 1146.8,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 104.09,
+                "course": 128.49,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "a2aa1c3e-b2ff-4d6a-ab93-54792f9a3b7b",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    16.269119237865187,
+                    0.06312884611136127
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "175528",
+                "type": "AIR TRACK",
+                "fid": "a2aa1c3e-b2ff-4d6a-ab93-54792f9a3b7b",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 406.21,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 438.20,
+                "course": 163.03,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "ac190588-9e14-47c9-93a5-ec8aacb16cbc",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    75.94971283438868,
+                    -130.20419845982173
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "957164",
+                "type": "AIR TRACK",
+                "fid": "ac190588-9e14-47c9-93a5-ec8aacb16cbc",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 694.43,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 55.004,
+                "course": 313.39,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "8682759b-c91e-4d54-b698-6d9bb625958e",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -26.339375432749073,
+                    101.08983644092673
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "514217",
+                "type": "SEA SURFACE TRACK",
+                "fid": "8682759b-c91e-4d54-b698-6d9bb625958e",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 7.2556,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 0.7598,
+                "course": 313.96,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "f75dfdd1-4e7f-4b3a-b563-5170d53ad5c1",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    85.60882644544768,
+                    -53.24672584098595
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "427946",
+                "type": "AIR TRACK",
+                "fid": "f75dfdd1-4e7f-4b3a-b563-5170d53ad5c1",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 405.38,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 158.86,
+                "course": 22.818,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "94962128-0a9b-4b05-9c50-87412125de0a",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    49.27837964370647,
+                    -66.9643453355023
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "746710",
+                "type": "SEA SURFACE TRACK",
+                "fid": "94962128-0a9b-4b05-9c50-87412125de0a",
+                "class": null,
+                "category": "SEA",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 1.3740,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 0.9062,
+                "course": 268.09,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "9123b242-31fb-484f-af9d-0877fc922aad",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    57.984706722322656,
+                    -134.68285870138618
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "143629",
+                "type": "AIR TRACK",
+                "fid": "9123b242-31fb-484f-af9d-0877fc922aad",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 447.51,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 2.6463,
+                "course": 135.69,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "36bd129e-f164-4dfd-87e4-6a468d3e650b",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    51.35116774576253,
+                    146.5561307301473
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "558417",
+                "type": "AIR TRACK",
+                "fid": "36bd129e-f164-4dfd-87e4-6a468d3e650b",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "PND",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 197.91,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 7.4484,
+                "course": 139.50,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "d1ed19b6-3fcd-4994-8a9c-8ca943beb371",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    63.28207225978208,
+                    57.40937378359963
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "070360",
+                "type": "AIR TRACK",
+                "fid": "d1ed19b6-3fcd-4994-8a9c-8ca943beb371",
+                "class": null,
+                "category": "AIR",
+                "alertLevel": null,
+                "threat": "UNK",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 350.28,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 3.4327,
+                "course": 146.72,
+                "classification": "UNCLASSIFIED"
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "b2e32cc1-7d0c-47a0-afbb-c3b8d7380f46",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    41.70508180740176,
+                    34.27903977450348
+                ]
+            },
+            "geometry_name": "position",
+            "properties": {
+                "name": "726402",
+                "type": "MISSLE TRACK",
+                "fid": "b2e32cc1-7d0c-47a0-afbb-c3b8d7380f46",
+                "class": null,
+                "category": "MSL",
+                "alertLevel": null,
+                "threat": "NEU",
+                "dimension": "LND",
+                "flag": null,
+                "speed": 1456.7,
+                "dtg": "2020-02-09T08:22:21.338Z",
+                "altitude": 893.98,
+                "course": 0.00,
+                "classification": "UNCLASSIFIED"
+            }
+        }
+    ],
+    "totalFeatures": "unknown",
+    "numberReturned": 25,
+    "timeStamp": "2020-02-09T08:22:21.338Z",
+    "crs": {
+        "type": "name",
+        "properties": {
+            "name": "urn:ogc:def:crs:EPSG::4326"
+        }
+    }
+}

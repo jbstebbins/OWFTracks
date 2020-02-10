@@ -15,9 +15,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
 	menuOption: string = 'AppConfig';
 
-	configReady: boolean = false;
-	config: ConfigModel = null;
-
 	constructor(private router: Router,
 		private notificationService: ActionNotificationService,
 		private configService: ConfigService) {
@@ -48,14 +45,6 @@ export class AppComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		this.configService.getConfig()
-			.subscribe(configModel => {
-				this.config = configModel;
-				this.configReady = true;
-
-				console.log('Config Service completed: ', configModel);
-			});
-
 		// this is required to initiate router for messaging
 		this.router.navigate([{
 			outlets: {

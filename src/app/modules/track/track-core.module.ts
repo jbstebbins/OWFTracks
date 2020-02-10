@@ -7,7 +7,7 @@ import { TabViewModule } from 'primeng/tabview';
 import { CardModule } from 'primeng/card';
 import { PanelModule } from 'primeng/panel';
 
-import { AngularSlickgridModule } from 'angular-slickgrid';
+import { AgGridModule } from 'ag-grid-angular';
 import { SharedServicesModule } from '../shared-services/shared-services.module';
 
 import { TrackCoreComponent } from './track-core/track-core.component';
@@ -34,7 +34,7 @@ const appRoutes: Routes = [
     TabViewModule,
     CardModule,
     PanelModule,
-    AngularSlickgridModule.forRoot(),
+    AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],
   exports: [TrackCoreComponent, CotMinotaurComponent]

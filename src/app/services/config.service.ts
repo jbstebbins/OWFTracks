@@ -16,6 +16,7 @@ const httpOptions = {
 })
 export class ConfigService {
 	config: Observable<ConfigModel> = null;
+	configModel: ConfigModel = null;
 	private baseUrl = 'assets/config.json';
 
 	constructor(private http: HttpClient) {
@@ -24,14 +25,18 @@ export class ConfigService {
 
 	private retrieveConfig(): void {
 		this.config = this.http
-		.get<ConfigModel>(this.baseUrl, { responseType: 'json' })
-		.pipe(
-			catchError(this.handleError('retrieveConfig', [])),
+			.get<ConfigModel>(this.baseUrl, { responseType: 'json' })
+			.pipe(
+				catchError(this.handleError('retrieveConfig', [])),
 				tap(console.log));
+
+		this.config.subscribe(model => {
+			this.configModel = model;
+		});
 	}
 
 	getConfig() {
-		return this.config;
+		return this.configModel;
 	}
 
 	private handleError<T>(operation = 'operation', result?: T) {

@@ -23,16 +23,19 @@ declare var Ozone: any;
   providedIn: 'root'
 })
 export class CotMinotaurService {
-  trackUrl: string = 'https://localhost:4200/assets/testdata/wfs_SimpleFeature_2020JAN14.json';
+  //trackUrl: string = 'https://localhost:4200/assets/testdata/testfile.json';
+  //trackUrl: string = 'https://localhost:8443/CotProviderSVC/rest/cotdummy/25';
+  trackUrl: string = '';
   trackData: CotTrackModel = null;
+  configReady: boolean = false;
+  config: ConfigModel = null;
 
   constructor(private http: HttpClient,
     private configService: ConfigService,
     private mapMessageService: MapMessagesService
-  ) { }
-
-  getConfig() {
-    return this.configService.getConfig();
+  ) {
+    this.config = this.configService.getConfig();
+    this.trackUrl = this.config.urls["CotService"];
   }
 
   getCotTracks(): Observable<any> {

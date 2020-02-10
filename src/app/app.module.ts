@@ -6,7 +6,7 @@ import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 
-import { AngularSlickgridModule } from 'angular-slickgrid';
+import { AgGridModule } from 'ag-grid-angular';
 import { SharedServicesModule, SharedComponents } from './modules/shared-services/shared-services.module';
 
 import { MessagesModule } from 'primeng/messages';
@@ -50,7 +50,7 @@ const routes: Routes = [
     MenubarModule,
     ButtonModule,
     TrackCoreModule,
-    AngularSlickgridModule.forRoot(),
+    AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],
   providers: [],

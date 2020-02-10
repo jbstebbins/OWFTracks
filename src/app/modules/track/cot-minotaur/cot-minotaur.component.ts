@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { Observable, Observer, of, Subject, EMPTY, Subscription, interval } from 'rxjs';
 import { startWith, switchMap } from 'rxjs/operators'
 
-import { AngularGridInstance, Column, GridOption } from 'angular-slickgrid';
+import { GridOptions } from "ag-grid-community";
+import { AgGridAngular } from 'ag-grid-angular';
 
 import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
@@ -24,52 +25,57 @@ import {
   styleUrls: ['./cot-minotaur.component.css']
 })
 export class CotMinotaurComponent implements OnInit, OnDestroy {
-  configReady: boolean = false;
   config: ConfigModel = null;
   mapStatusView: Subscription = null;
   trackData: any = [];
 
-  angularGrid: AngularGridInstance = null;
-  gridObject: any;
-  dataViewObj: any;
-  columnDefinitions: Column[] = [];
-  gridOptions: GridOption = {};
+  @ViewChild('agGridCot') agGrid: AgGridAngular;
+  gridOptions: GridOptions;
+  columnDefinitions: any = [];
+
+  rowData: any[] = [];
+  cacheRowData: any[] = [];
+
+  domLayout = "autoHeight";
 
   constructor(private configService: ConfigService,
     private cotMinotaurSerice: CotMinotaurService,
-    private mapMessageService: MapMessagesService) { 
-      this.prepareGrid();
-    }
+    private mapMessageService: MapMessagesService) {
+    this.gridOptions = <GridOptions>{
+      rowData: this.rowData,
+      columnDefs: this.createColumnDefs(),
+      context: {
+        componentParent: this
+      },
+      pagination: true
+    };
+  }
 
   ngOnInit() {
-    this.configService.getConfig()
-      .subscribe(configModel => {
-        this.config = configModel;
-        this.configReady = true;
+    this.config = this.configService.getConfig();
 
-        console.log('Config Service completed: ', configModel);
-
-        // do intial get on tracks
-        this.cotMinotaurSerice.getCotTracks().subscribe(
-          response => {
-            this.updateTrackData(response, true);
-          });
-        /*
-        interval(5000).pipe(
-          startWith(0),
-          switchMap(() => this.cotMinotaurSerice.getCotTracks())
-        ).subscribe(response => {
-          console.log(response);
-
-          this.updateTrackData(response);
-        });
-        */
-
-        this.mapStatusView = this.mapMessageService.getMapView().subscribe(
-          mapView => {
-            console.log(mapView);
-          });
+    // do intial get on tracks
+    this.cotMinotaurSerice.getCotTracks().subscribe(
+      response => {
+        this.updateTrackData(response, true);
       });
+
+    this.mapStatusView = this.mapMessageService.getMapView().subscribe(
+      mapView => {
+        console.log(mapView);
+      });
+
+    // start the refresh using timeout
+    setTimeout(() => {
+      interval(5000).pipe(
+        startWith(0),
+        switchMap(() => this.cotMinotaurSerice.getCotTracks())
+      ).subscribe(response => {
+        console.log(response);
+
+        this.updateTrackData(response);
+      });
+    }, 5000);
   }
 
   ngOnDestroy() {
@@ -84,6 +90,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       this.trackData = [];
 
       response.features.forEach(value => {
+        this.cacheRowData.push(value.id);
+
         this.trackData.push({
           id: value.id,
           featureType: value.geometry.type,
@@ -103,40 +111,86 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         });
       });
 
+      this.agGrid.api.setRowData(this.trackData);
       console.log(this.trackData);
+    } else {
+      let addRows: any[] = [], updateRows: any[] = [], deleteRows: any[] = [];
+
+      response.features.forEach(value => {
+        if (this.cacheRowData.indexOf(value.id)) {
+          updateRows.push({
+            id: value.id,
+            featureType: value.geometry.type,
+            name: value.properties.name,
+            type: value.properties.type,
+            category: value.properties.category,
+            class: value.properties.class,
+            alertLevel: value.properties.alertLevel,
+            threat: value.properties.threat,
+            dimension: value.properties.dimension,
+            flag: value.properties.flag,
+            speed: value.properties.speed,
+            dtg: value.properties.dtg,
+            altitude: value.properties.altitude,
+            course: value.properties.course,
+            classification: value.properties.classification
+          });
+        } else {
+          addRows.push({
+            id: value.id,
+            featureType: value.geometry.type,
+            name: value.properties.name,
+            type: value.properties.type,
+            category: value.properties.category,
+            class: value.properties.class,
+            alertLevel: value.properties.alertLevel,
+            threat: value.properties.threat,
+            dimension: value.properties.dimension,
+            flag: value.properties.flag,
+            speed: value.properties.speed,
+            dtg: value.properties.dtg,
+            altitude: value.properties.altitude,
+            course: value.properties.course,
+            classification: value.properties.classification
+          });
+        }
+      });
+
+      console.log(addRows, updateRows, deleteRows);
+      this.agGrid.api.updateRowData({ add: addRows, update: updateRows, remove: deleteRows });
     }
   }
 
-  private prepareGrid() {
+  private createColumnDefs() {
     this.columnDefinitions = [
-      { id: 'featureType', name: 'Feature', field: 'featureType', sortable: true },
-      { id: 'name', name: 'Name', field: 'name', sortable: true, filterable: true },
-      { id: 'type', name: 'Type', field: 'type', sortable: true, filterable: true },
-      { id: 'category', name: 'Category', field: 'category', sortable: true, filterable: true },
-      { id: 'class', name: 'Class', field: 'class', sortable: true, filterable: true },
-      { id: 'alertLevel', name: 'AlertLevel', field: 'alertLevel', sortable: true, filterable: true },
-      { id: 'threat', name: 'Threat', field: 'threat', sortable: true, filterable: true },
-      { id: 'dimension', name: 'Dimension', field: 'dimension', sortable: true },
-      { id: 'flag', name: 'Flag', field: 'flag', sortable: true, filterable: true },
-      { id: 'speed', name: 'Speed', field: 'speed', sortable: true },
-      { id: 'dtg', name: 'DTG', field: 'dtg', sortable: true },
-      { id: 'altitude', name: 'Altitude', field: 'altitude', sortable: true },
-      { id: 'course', name: 'Course', field: 'course' },
-      { id: 'classification', name: 'Classification', field: 'classification', filterable: true }
+      { field: 'featureType', sortable: true },
+      { field: 'name', sortable: true, filterable: true },
+      { field: 'type', sortable: true, filterable: true },
+      { field: 'category', sortable: true, filterable: true },
+      { field: 'class', sortable: true, filterable: true },
+      { field: 'alertLevel', sortable: true, filterable: true },
+      { field: 'threat', sortable: true, filterable: true },
+      { field: 'dimension', sortable: true },
+      { field: 'flag', sortable: true, filterable: true },
+      { field: 'speed', sortable: true },
+      { field: 'dtg', sortable: true },
+      { field: 'altitude', sortable: true },
+      { field: 'course' },
+      { field: 'classification', filterable: true }
     ];
 
-    this.gridOptions = {
-      enableAutoResize: true,
-      enableAutoSizeColumns: false,
-      enableSorting: true,
-      enableFiltering: true,
-      enablePagination: true
-    };
+    return this.columnDefinitions;
   }
 
-  angularGridReady(angularGrid: AngularGridInstance) {
-    this.angularGrid = angularGrid;
-    this.gridObject = angularGrid.slickGrid;
-    this.dataViewObj = angularGrid.dataView;
+  onGridReady(event) {
+    console.log(event);
+    this.agGrid.gridOptions.getRowNodeId = function(data) {
+      console.log(data.id);
+      return data.id;
+    }
+  }
+
+  onFirstDataRendered(params) {
+    console.log(params);
   }
 }

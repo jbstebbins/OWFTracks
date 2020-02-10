@@ -20,15 +20,12 @@ declare var Ozone: any;
 })
 export class PreferencesService {
   status: Observable<StatusModel> = null;
-  config: Observable<ConfigModel> = null;
   preferences: Observable<PreferencesModel> = null;
+  config: ConfigModel = null;
 
   constructor(private http: HttpClient,
     private configService: ConfigService) {
-  }
-
-  getConfig() {
-    return this.configService.getConfig();
+      this.config = this.configService.getConfig();
   }
 
   getPreference(namespace, name): Observable<PreferencesModel> {

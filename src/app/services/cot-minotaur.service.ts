@@ -41,7 +41,7 @@ export class CotMinotaurService {
     this.trackUrl = this.config.urls[trackLevel];
   }
 
-  getCotTracks(): Observable<any> {
+  getCotTracks(extent): Observable<any> {
     const httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
@@ -51,7 +51,7 @@ export class CotMinotaurService {
     };
 
     let tracks = this.http
-      .get<any>(this.trackUrl, httpOptions)
+      .get<any>(this.trackUrl + "/25/" + extent, httpOptions)
       .pipe(
         tap(res => { this.processResponse(res); }),
         map((data: any) => this.trackData = data.body),

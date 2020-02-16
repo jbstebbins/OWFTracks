@@ -3,10 +3,12 @@
 	"buildDate": "2018/11/12",
 	"urls": {
 		"RefreshRate": "30000",
-		"OWFServer": "https://10.10.30.178:8443/owf",
-		"CotServiceActive": "CotServerLocal",
+		"OWFServer": "https://localhost:8443/owf",
+		"CotServiceActive": "CotServiceDev2",
 		"CotServiceProd": "",
-		"CotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy/25",
+		"CotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
+		"CotServiceDev1": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
+		"CotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
 		"CotServerLocal": "assets/testdata/testfile.json"
 	},
 	"roles": ["role1", "role2"]

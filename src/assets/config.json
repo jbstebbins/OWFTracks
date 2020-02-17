@@ -2,7 +2,8 @@
 	"version": "1.0.b12",
 	"buildDate": "2018/11/12",
 	"urls": {
-		"RefreshRate": "30000",
+		"RefreshRate": "5000",
+		"TrackCount": "2000",
 		"OWFServer": "https://localhost:8443/owf",
 		"CotServiceActive": "CotServiceDev2",
 		"CotServiceProd": "",

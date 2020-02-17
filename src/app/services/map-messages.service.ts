@@ -34,8 +34,6 @@ export class MapMessagesService {
   }
 
   receiveMapStatusView(observer, sender, msg, channel) {
-    console.log(observer, sender, msg, channel);
-
     let message = JSON.parse(msg);
 
     let mBounds = new Bounds(message.bounds.southWest, message.bounds.northEast);

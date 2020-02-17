@@ -3,6 +3,7 @@ import {Deserializable} from "../interfaces/deserializable";
 export class CotTrackModel implements Deserializable {
     type: string;
     features: CotTrackFeature[];
+    removed: any[];
     totalFeatures: string;
     numberReturned: number;
     timeStamp: string;

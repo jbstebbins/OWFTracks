@@ -32,6 +32,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
   config: ConfigModel = null;
   mapStatusView: Subscription = null;
+  trackStatusInitial: Subscription = null;
+  trackStatusInterval: Subscription = null;
   trackData: any = [];
 
   @ViewChild('agGridCot') agGrid: AgGridAngular;
@@ -117,40 +119,45 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
     this.mapStatusView = this.mapMessageService.getMapView().subscribe(
       mapView => {
-        console.log(mapView);
         this.mapView = mapView;
 
         // do intial get on tracks on view change
         this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
           mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
 
-        this.cotMinotaurSerice.getCotTracks(this.extent).subscribe(
+        if (this.trackStatusInitial) {
+          this.trackStatusInitial.unsubscribe();
+        }
+        
+        this.trackStatusInitial = this.cotMinotaurSerice.getCotTracks(this.config.urls["TrackCount"], this.extent).subscribe(
           response => {
             this.updateTrackData(response, true);
+
+            // remove old interval subscription and start new one
+            if (this.trackStatusInterval) {
+              this.trackStatusInterval.unsubscribe();
+            }
+
+            setTimeout(() => {
+              this.trackStatusInterval = interval(this.config.urls["RefreshRate"]).pipe(
+                startWith(0),
+                switchMap(() => this.cotMinotaurSerice.getCotTracks("randomize", this.extent))
+              ).subscribe(response => {
+                this.updateTrackData(response);
+              });
+            }, 5000);
           });
       });
-
-    // start the refresh using timeout
-    setTimeout(() => {
-      interval(30000).pipe(
-        startWith(0),
-        switchMap(() => this.cotMinotaurSerice.getCotTracks(this.extent))
-      ).subscribe(response => {
-        console.log(response);
-
-        this.updateTrackData(response);
-      });
-    }, 5000);
   }
 
   ngOnDestroy() {
     // prevent memory leak when component destroyed
     this.mapStatusView.unsubscribe();
+    this.trackStatusInitial.unsubscribe();
+    this.trackStatusInterval.unsubscribe();
   }
 
   private updateTrackData(response: CotTrackModel, initial?: boolean) {
-    console.log(response);
-
     if (initial) {
       this.trackData = [];
 
@@ -178,7 +185,6 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         });
       });
 
-      console.log(this.trackData);
       this.agGrid.api.setRowData(this.trackData);
 
       this.sendToMap({ initial: this.trackData });
@@ -233,7 +239,12 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         }
       });
 
-      console.log(addRows, updateRows, removeRows);
+      response.removed.forEach(value => {
+        removeRows.push({
+          id: value
+        });
+      });
+
       this.agGrid.api.updateRowData({ add: addRows, update: updateRows, remove: removeRows });
 
       this.sendToMap({ add: addRows, update: updateRows, remove: removeRows });
@@ -265,13 +276,11 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   }
 
   onGridReady(params) {
-    console.log(params);
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
   }
 
   onFirstDataRendered(params) {
-    console.log(params);
   }
 
   sendToMap(tracks) {
@@ -285,7 +294,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
     let plotMessage = {
       "overlayId": "Tracks",
       "featureId": "Minotaur",
-      "feature": "",
+      "feature": undefined,
       "name": "Minotaur",
       "zoom": false
     };
@@ -342,6 +351,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       plotMessage.feature = kmlHeader + kmlPayload + kmlFooter;
     } else {
       // if add/update/remove
+      plotMessage.feature = {};
       kmlPayload = {};
       let addTracks = "";
 
@@ -352,7 +362,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
           "<styleUrl>#" + this.getTrackStyle(track.type, track.threat) + "</styleUrl> " +
           "<Point><coordinates>" + track.lon+","+track.lat+","+track.altitude + "</coordinates></Point></Placemark> "
       });
-      plotMessage.feature["add"] = addTracks;
+      plotMessage.feature["add"] = kmlHeader + addTracks + kmlFooter;
 
       let updateTracks = "";
       tracks.update.forEach(track => {
@@ -362,7 +372,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
           "<styleUrl>#" + this.getTrackStyle(track.type, track.threat) + "</styleUrl> " +
           "<Point><coordinates>" + track.lon+","+track.lat+","+track.altitude + "</coordinates></Point></Placemark> "
       });
-      plotMessage.feature["update"] = updateTracks;
+      plotMessage.feature["update"] = kmlHeader + updateTracks + kmlFooter;
 
       plotMessage.feature["remove"] = tracks.remove;
     }
@@ -373,7 +383,6 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   getTrackStyle(type, threat) {
     let style = "";
 
-    console.log(type, threat);
     if (type === "AIR TRACK") {
       style = this.styleMatrix.air[threat];
     } else if (type === "GROUND TRACK") {

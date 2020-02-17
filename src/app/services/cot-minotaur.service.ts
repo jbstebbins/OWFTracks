@@ -41,7 +41,7 @@ export class CotMinotaurService {
     this.trackUrl = this.config.urls[trackLevel];
   }
 
-  getCotTracks(extent): Observable<any> {
+  getCotTracks(limit, extent): Observable<any> {
     const httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json'
@@ -50,8 +50,10 @@ export class CotMinotaurService {
       withCredentials: true
     };
 
+    let url = ((limit === "randomize") ? (this.trackUrl + "/randomize") : (this.trackUrl + "/" + limit + "/" + extent))
+
     let tracks = this.http
-      .get<any>(this.trackUrl + "/25/" + extent, httpOptions)
+      .get<any>(url, httpOptions)
       .pipe(
         tap(res => { this.processResponse(res); }),
         map((data: any) => this.trackData = data.body),
@@ -61,7 +63,7 @@ export class CotMinotaurService {
   }
 
   private processResponse(response) {
-    console.log(response.headers, response.status, response.type);
+    // console.log(response.headers, response.status, response.type);
   }
 
   private handleError<T>(operation = 'operation', result?: T) {

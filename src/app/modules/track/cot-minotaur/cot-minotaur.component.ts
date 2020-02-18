@@ -156,6 +156,57 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         }
       };
 
+      const kmlHeader = "<kml xmlns=\"http://www.opengis.net/kml/2.2\"> " +
+        "<Document> " +
+        "    <name>StyleMap.kml</name> " +
+        "    <open>1</open> ";
+      const kmlFooter = "</Document></kml>";
+      const kmlStyles =
+        "      <Style id=\"air_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style>";
+
+      const plotMessage = {
+        "overlayId": "Tracks",
+        "featureId": "Minotaur",
+        "feature": undefined,
+        "name": "Minotaur",
+        "zoom": false
+      };
+
       const getTrackStyle = (type, threat) => {
         let style = "";
 
@@ -179,62 +230,11 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       const formatKml = (data) => {
         let tracks = data.tracks;
 
-        // format and send to map
-        let kmlHeader = "<kml xmlns=\"http://www.opengis.net/kml/2.2\"> " +
-          "<Document> " +
-          "    <name>StyleMap.kml</name> " +
-          "    <open>1</open> ";
-        let kmlFooter = "</Document></kml>";
-
-        let plotMessage = {
-          "overlayId": "Tracks",
-          "featureId": "Minotaur",
-          "feature": undefined,
-          "name": "Minotaur",
-          "zoom": false
-        };
+        // format and return to main thread
 
         // if initial
-        let kmlPayload: any;
         if (tracks.initial !== undefined) {
-          kmlPayload =
-            "      <Style id=\"air_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"air_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"air_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"air_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"air_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"air_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ground_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"missle_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"seasurface_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"ufo_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-            "      <Style id=\"unk_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style>";
-
+          let kmlPayload = "";
           tracks.initial.forEach(track => {
             kmlPayload += "<Placemark> " +
               "<name>" + track.name + "</name> " +
@@ -243,11 +243,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
               "<Point><coordinates>" + track.lon + "," + track.lat + "," + track.altitude + "</coordinates></Point></Placemark> "
           });
 
-          plotMessage.feature = kmlHeader + kmlPayload + kmlFooter;
+          plotMessage.feature = kmlHeader + kmlStyles + kmlPayload + kmlFooter;
         } else {
           // if add/update/remove
           plotMessage.feature = {};
-          kmlPayload = {};
           let addTracks = "";
 
           tracks.add.forEach(track => {
@@ -278,6 +277,18 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         postMessage({
           status: "kml formatting complete", kml: plotMessage
         });
+
+        // delete the allocated memory
+        if (plotMessage.feature.hasOwnProperty("add")) {
+          delete plotMessage.feature.add;
+        }
+        if (plotMessage.feature.hasOwnProperty("update")) {
+          delete plotMessage.feature.update;
+        }
+        if (plotMessage.feature.hasOwnProperty("remove")) {
+          delete plotMessage.feature.remove;
+        }
+        plotMessage.feature = "";
       };
 
       // @ts-ignore

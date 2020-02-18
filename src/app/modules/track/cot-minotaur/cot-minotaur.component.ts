@@ -329,27 +329,31 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       this.trackData = [];
 
       response.features.forEach(value => {
-        this.cacheRowData.push(value.id);
+        if (this.cacheRowData.indexOf(value.id) < 0) {
+          this.cacheRowData.push(value.id);
 
-        this.trackData.push({
-          id: value.id,
-          featureType: value.geometry.type,
-          name: value.properties.name,
-          type: value.properties.type,
-          category: value.properties.category,
-          class: value.properties.class,
-          alertLevel: value.properties.alertLevel,
-          threat: value.properties.threat,
-          dimension: value.properties.dimension,
-          flag: value.properties.flag,
-          speed: value.properties.speed,
-          dtg: value.properties.dtg,
-          altitude: value.properties.altitude,
-          course: value.properties.course,
-          lat: value.geometry.coordinates[0],
-          lon: value.geometry.coordinates[1],
-          classification: value.properties.classification
-        });
+          this.trackData.push({
+            id: value.id,
+            featureType: value.geometry.type,
+            name: value.properties.name,
+            type: value.properties.type,
+            category: value.properties.category,
+            class: value.properties.class,
+            alertLevel: value.properties.alertLevel,
+            threat: value.properties.threat,
+            dimension: value.properties.dimension,
+            flag: value.properties.flag,
+            speed: value.properties.speed,
+            dtg: value.properties.dtg,
+            altitude: value.properties.altitude,
+            course: value.properties.course,
+            lat: value.geometry.coordinates[0],
+            lon: value.geometry.coordinates[1],
+            classification: value.properties.classification
+          });
+        } else {
+          console.log("duplicate row on initial, " + value.id);
+        }
       });
 
       this.agGrid.api.setRowData(this.trackData);
@@ -384,6 +388,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
             });
           }
         } else {
+          this.cacheRowData.push(value.id);
+
           addRows.push({
             id: value.id,
             featureType: value.geometry.type,
@@ -407,6 +413,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       });
 
       response.removed.forEach(value => {
+        this.cacheRowData.splice(this.cacheRowData.indexOf(value), 1);
+
         removeRows.push({
           id: value
         });

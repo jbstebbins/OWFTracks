@@ -357,16 +357,44 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
       });
 
       this.agGrid.api.setRowData(this.trackData);
-
       this.sendToMap({ initial: this.trackData });
     } else {
       let addRows: any[] = [], updateRows: any[] = [], removeRows: any[] = [];
+      let addRowsID: any[] = [], updateRowsID: any[] = [];
 
       response.features.forEach(value => {
-        if (this.cacheRowData.indexOf(value.id) >= 0) {
+        let index = this.cacheRowData.indexOf(value.id);
+        if (index < 0) {
+          this.cacheRowData.push(value.id);
+
+          addRowsID.push(value.id);
+          addRows.push({
+            id: value.id,
+            featureType: value.geometry.type,
+            name: value.properties.name,
+            type: value.properties.type,
+            category: value.properties.category,
+            class: value.properties.class,
+            alertLevel: value.properties.alertLevel,
+            threat: value.properties.threat,
+            dimension: value.properties.dimension,
+            flag: value.properties.flag,
+            speed: value.properties.speed,
+            dtg: value.properties.dtg,
+            altitude: value.properties.altitude,
+            course: value.properties.course,
+            lat: value.geometry.coordinates[0],
+            lon: value.geometry.coordinates[1],
+            classification: value.properties.classification
+          });
+        } else {
           if (value.geometry.type === "remove") {
-            removeRows.push(value.id);
+            this.cacheRowData.splice(index, 1);
+            removeRows.push({
+              id: value.id
+            });
           } else {
+            updateRowsID.push(value.id);
             updateRows.push({
               id: value.id,
               featureType: value.geometry.type,
@@ -387,41 +415,39 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
               classification: value.properties.classification
             });
           }
-        } else {
-          this.cacheRowData.push(value.id);
+        }
+      });
 
-          addRows.push({
-            id: value.id,
-            featureType: value.geometry.type,
-            name: value.properties.name,
-            type: value.properties.type,
-            category: value.properties.category,
-            class: value.properties.class,
-            alertLevel: value.properties.alertLevel,
-            threat: value.properties.threat,
-            dimension: value.properties.dimension,
-            flag: value.properties.flag,
-            speed: value.properties.speed,
-            dtg: value.properties.dtg,
-            altitude: value.properties.altitude,
-            course: value.properties.course,
-            lat: value.geometry.coordinates[0],
-            lon: value.geometry.coordinates[1],
-            classification: value.properties.classification
-          });
+      updateRowsID.forEach(value => {
+        if (addRowsID.indexOf(value) >= 0) {
+          console.log("update row in add collection, " + value);
         }
       });
 
       response.removed.forEach(value => {
-        this.cacheRowData.splice(this.cacheRowData.indexOf(value), 1);
+        if (addRowsID.indexOf(value) >= 0) {
+          console.log("delete row is also being added, " + value);
+        }
+        if (updateRowsID.indexOf(value) >= 0) {
+          console.log("delete row is also being updated, " + value);
+        }
 
-        removeRows.push({
-          id: value
-        });
+        let index = this.cacheRowData.indexOf(value);
+        if (index < 0) {
+          console.log("delete index not found, " + value);
+        } else {
+          let id: any[] = this.cacheRowData.splice(index, 1);
+          if (id.indexOf(value) < 0) {
+            console.log("deleted item index is incorrect; ", id, value);
+          } else {
+            removeRows.push({
+              id: value
+            });
+          }
+        }
       });
 
       this.agGrid.api.updateRowData({ add: addRows, update: updateRows, remove: removeRows });
-
       this.sendToMap({ add: addRows, update: updateRows, remove: removeRows });
     }
   }

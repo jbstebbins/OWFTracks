@@ -6,8 +6,8 @@ import { Subject } from 'rxjs';
 })
 export class ActionNotificationService {
   // Observable string sources
-  private publisherSource = new Subject<string>();
-  private subscriberSource = new Subject<string>();
+  private publisherSource = new Subject<any>();
+  private subscriberSource = new Subject<any>();
 
   // Observable string streams
   publisher$ = this.publisherSource.asObservable();
@@ -16,11 +16,11 @@ export class ActionNotificationService {
   constructor() { }
 
   // Service message commands
-  publisherAction(item: string) {
+  publisherAction(item: any) {
     this.publisherSource.next(item);
   }
 
-  subscriberAction(item: string) {
+  subscriberAction(item: any) {
     this.subscriberSource.next(item);
   }
 }

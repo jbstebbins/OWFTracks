@@ -1,0 +1,9 @@
+<div style="width: 100%; height: calc(100vh - 96px)">
+  <ag-grid-angular #agGridCSV class="ag-theme-balham" [rowData]="rowData"
+      [columnDefs]="columnDefinitions" [domLayout]="domLayout"
+      [pagination]="true"
+      [paginationPageSize]="paginationPageSize" [suppressScrollOnNewData]="true"
+      (gridReady)="onGridReady($event)" (firstDataRendered)="onFirstDataRendered($event)"
+      style="width: 100%; height: 100%">
+  </ag-grid-angular>
+</div>

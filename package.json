@@ -30,12 +30,14 @@
     "font-awesome": "^4.7.0",
     "jquery": "^3.4.1",
     "jquery-ui-dist": "^1.12.1",
+    "papaparse": "^5.1.1",
     "popper": "^1.0.1",
     "primeicons": "^2.0.0",
     "primeng": "^9.0.0-rc.2",
     "rxjs": "~6.5.4",
     "stream": "0.0.2",
     "tslib": "^1.9.0",
+    "xls": "^0.5.1",
     "zone.js": "~0.8.26"
   },
   "devDependencies": {

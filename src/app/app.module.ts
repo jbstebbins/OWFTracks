@@ -20,9 +20,11 @@ import { GrowlerComponent } from './components/growler/growler.component';
 import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
 
 import { TrackCoreModule } from './modules/track/track-core.module';
+import { CsvCoreModule } from './modules/csv/csv-core.module';
 
 const routes: Routes = [
   { path: 'service', loadChildren: './modules/track/track-core.module#TrackCoreModule' },
+  { path: 'service', loadChildren: './modules/csv/csv-core.module#CsvCoreModule' },
   { path: '', redirectTo: '/', pathMatch: 'full' },
   { path: 'message/:type', component: GrowlerComponent },
   { path: '**', component: PageNotFoundComponent, outlet: 'trackOutlet' },
@@ -50,6 +52,7 @@ const routes: Routes = [
     MenubarModule,
     ButtonModule,
     TrackCoreModule,
+    CsvCoreModule,
     AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],

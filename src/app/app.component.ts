@@ -19,11 +19,21 @@ export class AppComponent implements OnInit, OnDestroy {
 		private notificationService: ActionNotificationService,
 		private configService: ConfigService) {
 		this.notificationService.subscriber$.subscribe(
-			actionName => {
-				console.log(`${actionName}, received by AppComponent`);
+			payload => {
+				console.log(`${payload.action}, received by AppComponent`);
 
 				// check the menu item pressed and take action
-				if (actionName === "Connect REST") {
+				if (payload.action === "Connect CSV") {
+					this.menuOption = 'ServiceCSV';
+
+					this.router.navigate([{
+					  outlets: {
+						primary: ['message', 'notice', { message: 'Displaying Status information!' }],
+						trackOutlet: ['service', 'connect.csv'],
+						errorOutlet: ['']
+					  }
+					}]);		  
+				} else if (payload.action === "Connect REST") {
 					this.menuOption = 'ServiceRest';
 
 					this.router.navigate([{
@@ -36,7 +46,7 @@ export class AppComponent implements OnInit, OnDestroy {
 				} else {
 					this.router.navigate([{
 						outlets: {
-							primary: ['message', 'notice', { message: `${actionName} received by AppComponent` }]
+							primary: ['message', 'notice', { message: `${payload.action} received by AppComponent` }]
 						}
 					}]);
 				}
@@ -57,7 +67,7 @@ export class AppComponent implements OnInit, OnDestroy {
 	}
   
 	notifyMenu() {
-		this.notificationService.publisherAction('New File');
+		this.notificationService.publisherAction({action:'New File'});
 		console.log('New File, pressed from AppComponent');
 	}
 }

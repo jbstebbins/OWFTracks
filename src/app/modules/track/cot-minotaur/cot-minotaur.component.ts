@@ -52,7 +52,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   rowData: any[] = [];
   cacheRowData: any[] = [];
 
-  domLayout = "autoHeight";
+  domLayout = "normal";
   extent: any;
 
   constructor(private configService: ConfigService,
@@ -486,5 +486,9 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
   sendToMap(tracks) {
     this.worker.postMessage({ tracks: tracks });
+  }
+
+  paginationNumberFormatter(params) {
+    return "[" + params.value.toLocaleString() + "]";
   }
 }

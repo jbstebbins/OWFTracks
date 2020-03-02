@@ -37,7 +37,7 @@ export class CsvGridComponent implements OnInit {
   rowHeaders: any[] = [];
   rowData: any[] = [];
 
-  domLayout = "autoHeight";
+  domLayout = "normal";
 
   @Input()
   gridData: any[];
@@ -135,5 +135,9 @@ export class CsvGridComponent implements OnInit {
 
     this.rowData = records;
     //this.agGrid.api.setRowData(this.rowData);
+  }
+
+  paginationNumberFormatter(params) {
+    return "[" + params.value.toLocaleString() + "]";
   }
 }

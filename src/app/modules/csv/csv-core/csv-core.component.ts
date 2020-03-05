@@ -1,10 +1,10 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { ActionNotificationService } from '../../../services/action-notification.service';
 
 import { jsUtils } from '../../../library/jsUtils';
-import * as xls from 'xls';
+import * as xls from 'xlsx';
 import * as papa from 'papaparse';
 
 @Component({
@@ -18,10 +18,12 @@ export class CsvCoreComponent implements OnInit {
   subscription: Subscription;
 
   public parentMessage: string;
-  public loadComponent = false;
+  public loadComponent: boolean = false;
+  public loadStatus: string = "(no file selected!)";
 
   public records: any[] = [];
-  @ViewChild('csvReader') csvReader: any;
+  @ViewChild('csvStatus') csvStatus: ElementRef;
+  @ViewChild('csvFileUpload') csvFileUpload: ElementRef;
 
   constructor(private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
@@ -46,17 +48,17 @@ export class CsvCoreComponent implements OnInit {
 
   uploadListener($event: any): void {
     let files = $event.srcElement.files;
+    let input = $event.target;
+
+    /* 
+    xls.parse('data.xls', function(error, data) {
+      console.log(data);
+    });
+    */
+    this.resetGrid();
 
     if (this.isValidCSVFile(files[0])) {
-      let input = $event.target;
       let reader = new FileReader();
-
-      /* 
-      xls.parse('data.xls', function(error, data) {
-	      console.log(data);
-      });
-      */
-      this.resetGrid();
 
       if (input.files[0].name.endsWith("csv")) {
         reader.readAsText(input.files[0]);
@@ -66,11 +68,19 @@ export class CsvCoreComponent implements OnInit {
           let csvRecordsArray = (<string>csvData).split(/\r\n|\n/);
 
           let parsedValue;
+          let count = 0, error = 0;
           csvRecordsArray.forEach((value) => {
             parsedValue = papa.parse(value);
-            this.records.push(parsedValue.data[0]);
+
+            if (parsedValue.errors[0] !== undefined) {
+              error++;
+            } else {
+              count++;
+              this.records.push(parsedValue.data[0]);
+            }
           });
 
+          this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
           this.loadComponent = true;
         };
 
@@ -78,12 +88,36 @@ export class CsvCoreComponent implements OnInit {
           console.log('error is occured while reading file!');
         };
       } else {
+        reader.readAsArrayBuffer(input.files[0]);
+        reader.onload = () => {
+          let xlsData: ArrayBuffer = <ArrayBuffer>reader.result;
+          var data = new Uint8Array(xlsData);
+          var workbook = xls.read(data, { type: 'array' });
+          var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
+          // header: 1 instructs xlsx to create an 'array of arrays'
+          var result = xls.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          // data preview
+          let count = 0, error = 0;
+          result.forEach((item, index) => {
+            console.log(item);
+            count++;
+            this.records.push(item);
+          });
+
+          this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
+          this.loadComponent = true;
+        }
       }
     } else {
       alert("Please import valid .csv file.");
       this.resetGrid();
     }
+  }
+
+  searchListener($event: any): void {
+    console.log($event);
   }
 
   isValidCSVFile(file: any) {
@@ -93,5 +127,6 @@ export class CsvCoreComponent implements OnInit {
   resetGrid() {
     this.records = [];
     this.loadComponent = false;
+    this.loadStatus = "(no file selected!)";
   }
 }

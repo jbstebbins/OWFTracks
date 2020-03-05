@@ -27,6 +27,7 @@
     "ag-grid-community": "^22.1.1",
     "bootstrap": "^3.4.1",
     "core-js": "^2.5.4",
+    "file-saver": "^2.0.2",
     "font-awesome": "^4.7.0",
     "jquery": "^3.4.1",
     "jquery-ui-dist": "^1.12.1",
@@ -37,7 +38,7 @@
     "rxjs": "~6.5.4",
     "stream": "0.0.2",
     "tslib": "^1.9.0",
-    "xls": "^0.5.1",
+    "xlsx": "^0.15.5",
     "zone.js": "~0.8.26"
   },
   "devDependencies": {

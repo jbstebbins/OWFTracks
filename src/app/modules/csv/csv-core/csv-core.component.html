@@ -1,5 +1,17 @@
-<input type="file" #csvReader name="Upload CSV" id="txtFileUpload" (change)="uploadListener($event)" accept=".csv" />
-<p>
-  csv-core works!
-</p>
+<div class="container" style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;">
+  <div class="row">
+    <div class="col-sm">
+      <div *ngIf="loadComponent">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch" (change)="searchListener($event)"
+        title="Enter Search Text..." />
+      </div>
+    </div>
+    <div class="col-sm">
+      <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
+    </div>
+    <div class="col-sm">
+      <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (change)="uploadListener($event)"
+        accept=".csv, .xls, .xslx" />
+    </div>
+  </div>
+</div>
 <app-csv-grid *ngIf="loadComponent" [gridData]="records"></app-csv-grid>

@@ -98,6 +98,9 @@ export class CsvGridComponent implements OnInit {
 
         index++;
       });
+
+      // remove header row from imported data
+      this.gridData.splice(0, 1);
     }
 
     return this.columnDefinitions;

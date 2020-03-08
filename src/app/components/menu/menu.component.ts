@@ -14,6 +14,8 @@ export class MenuComponent implements OnInit, OnDestroy {
   searchText: string = 'Search';
   subscription: Subscription;
 
+  isAvailable: boolean = false;
+
   constructor(private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
@@ -29,9 +31,9 @@ export class MenuComponent implements OnInit, OnDestroy {
     let items: any = this.menuItems;
 
     items.items[0].items[0].command = this.notifyMenu.bind(this);  // Service -> Load CSV
-    items.items[0].items[1].command = this.notifyMenu.bind(this);  // Service -> Load Rest
-    items.items[0].items[2].command = this.notifyMenu.bind(this);  // Service -> Load Rest
-    items.items[1].items[0].command = this.notifyMenu.bind(this);  // help -> about
+    items.items[0].items[1].command = this.notifyMenu.bind(this);  // Service -> Load Feature
+    //items.items[0].items[2].command = this.notifyMenu.bind(this);  // Service -> Load Rest
+    //items.items[1].items[0].command = this.notifyMenu.bind(this);  // help -> about
   }
 
   ngOnDestroy() {

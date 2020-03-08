@@ -36,7 +36,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   layerFieldSelected: Track;
 
   layers: any[] = [];
-  layersData: any[] = [];
+  layersDefinition: any[] = [];
   layerSelected: Track;
 
   layerRecords: number = 0;
@@ -88,6 +88,20 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log("features-core initialized.");
+    console.log(this.configService.memoryPersistence);
+
+    // recall memory if present and activate
+    if (this.configService.getMemoryValue("layers") !== undefined) {
+      this.layers = this.configService.getMemoryValue("layers");
+      this.layersDefinition = this.configService.getMemoryValue("layersDefinition");
+      this.layerSelected = this.configService.getMemoryValue("layerSelected");
+
+      if (this.layerSelected !== undefined) {
+        this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+      }      
+    }
+
+    // subscribe to catalog/map integration
     this.mapFeaturePlotUrl = this.mapMessageService.getMapFeaturePlotUrl().subscribe(
       message => {
         // only arcgis-feature are accepted
@@ -109,8 +123,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           if (!duplicate) {
             // trigger angular binding
             this.layers = [...this.layers, newItem];
-            this.layersData = [...this.layersData, layerDefinition];
+            this.layersDefinition = [...this.layersDefinition, layerDefinition];
 
+            // save to memory for recall
+            this.configService.setMemoryValue("layers", this.layers);
+            this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
+
+            console.log(this.configService.memoryPersistence);
             // if first time
             if (this.layers.length === 1) {
               this.selectedLayer({ originalEvent: null, value: newItem });
@@ -148,14 +167,19 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   selectedLayer($event: any): void {
+    console.log($event.value, this.layerSelected);
+
     this.layerSelected = $event.value;
+    this.configService.setMemoryValue("layerSelected", this.layerSelected);
 
     // change ui state and force change
     this.loadComponent = false;
     this.cdr.detectChanges();
 
-    this.layersData.forEach((value, index) => {
+    this.layersDefinition.forEach((value, index) => {
+      console.log(value.uuid, this.layerSelected.uuid);
       if (value.uuid === this.layerSelected.uuid) {
+        console.log("------");
         this.layer = value;
         this.loadComponent = true;
       }

@@ -1,5 +1,5 @@
 <p-menubar [model]="menuItems.items">
-  <div>
+  <div *ngIf="isAvailable">
     <input type="text" #search placeholder="{{searchText}}" (keyup.enter)="onSearchEnter(search.value)">
     <button pButton icon="fa fa-sign-out" style="margin-left:.25em" (click)="onSearchEnter(search.value)"></button>
   </div>

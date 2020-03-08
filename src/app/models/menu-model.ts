@@ -13,23 +13,8 @@ export class MenuModel {
                 command: null
             },
             {
-                label: 'Connect REST',
-                icon: 'pi pi-fw pi-list',
-                command: null
-            },
-            {
                 label: 'Connect FEATURE',
                 icon: 'pi pi-fw pi-list',
-                command: null
-            }
-            ]
-        },
-        {
-            label: 'Help',
-            icon: 'pi pi-fw pi-question',
-            items: [{
-                label: 'About',
-                icon: 'pi pi-fw pi-info',
                 command: null
             }
             ]

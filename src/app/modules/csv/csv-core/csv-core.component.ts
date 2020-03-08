@@ -37,8 +37,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
         if (payload.action === "CSV INVALID DATA") {
           this.isDataValid = !payload.value;
         }
-      }
-    );
+      });
   }
 
   ngOnInit() {

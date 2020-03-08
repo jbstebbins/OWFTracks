@@ -18,14 +18,17 @@ export class jsUtils {
     public convertDMSDD(coordinates): number {
         let dms = coordinates.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(dms[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(dms[1]);
         var s = Number(dms[2].replace(/[NSEW]/gi, ""));
+
         var dir = "+";
-        if (coordinates.includes("W") || coordinates.includes("S")) {
+        if (coordinates.includes("-") || coordinates.includes("W") || coordinates.includes("S")) {
             dir = "-";
         }
 
-        var dd = (((dir === "-") ? -1 : 1) * d) + ((m / 60) + (s / 3600));
+        var dd = ((dir === "-") ? -1 : 1) * (d + ((m / 60) + (s / 3600)));
         return dd;
     }
 
@@ -33,13 +36,16 @@ export class jsUtils {
         let ddm = coordinates.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
 
         var d = Number(ddm[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(ddm[1].replace(/[NSEW]/gi, ""));
+
         var dir = "+";
-        if (coordinates.includes("W") || coordinates.includes("S")) {
+        if (coordinates.includes("-") || coordinates.includes("W") || coordinates.includes("S")) {
             dir = "-";
         }
 
-        var dd = (((dir === "-") ? -1 : 1) * d) + (m / 60);
+        var dd = ((dir === "-") ? -1 : 1) * (d + (m / 60));
         return dd;
     }
 
@@ -104,34 +110,36 @@ export class jsUtils {
     public convertDMSLongitudeToDD(longitude): number {
         var dms = longitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(dms[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(dms[1]);
         var s = Number(dms[2].replace(/[EW]/gi, ""));
 
         var dir = "+";
-        if (longitude.includes("W")) {
+        if (longitude.includes("-") || longitude.includes("W")) {
             dir = "-";
         }
 
         var dm = m + (s / 60);
-        d = ((dir === "-") ? -1 : 1) * d;
-        var dd = d + (dm / 60);
+        var dd = ((dir === "-") ? -1 : 1) * (d + (dm / 60));
         return dd;
     }
 
     public convertDMSLatitudeToDD(latitude): number {
         var dms = latitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(dms[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(dms[1]);
         var s = Number(dms[2].replace(/[NS]/gi, ""));
 
         var dir = "+";
-        if (latitude.includes("S")) {
+        if (latitude.includes("-") || latitude.includes("S")) {
             dir = "-";
         }
 
         var dm = m + (s / 60);
-        d = ((dir === "-") ? -1 : 1) * d;
-        var dd = d + (dm / 60);
+        var dd = ((dir === "-") ? -1 : 1) * (d + (dm / 60));
         return dd;
     }
 
@@ -148,30 +156,32 @@ export class jsUtils {
     public convertDDMLongitudeToDD(longitude): number {
         var ddm = longitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(ddm[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(ddm[1].replace(/[EW]/gi, ""));
 
         var dir = "+";
-        if (longitude.includes("S")) {
+        if (longitude.includes("-") || longitude.includes("S")) {
             dir = "-";
         }
 
-        d = ((dir === "-") ? -1 : 1) * d;
-        var dd = d + (m / 60);
+        var dd = ((dir === "-") ? -1 : 1) * (d + (m / 60));
         return dd;
     }
 
     public convertDDMLatitudeToDD(latitude): number {
         var ddm = latitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(ddm[0]);
+        if (d < 0) d = d * -1;
+
         var m = Number(ddm[1].replace(/[NS]/gi, ""));
 
         var dir = "+";
-        if (latitude.includes("S")) {
+        if (latitude.includes("-") || latitude.includes("S")) {
             dir = "-";
         }
 
-        d = ((dir === "-") ? -1 : 1) * d;
-        var dd = d + (m / 60);
+        var dd = ((dir === "-") ? -1 : 1) * (d + (m / 60));
         return dd;
     }
 

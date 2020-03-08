@@ -62,15 +62,16 @@ export class AppComponent implements OnInit, OnDestroy {
 				}
 			}
 		);
-	}
 
-	ngOnInit() {
 		// this is required to initiate router for messaging
 		this.router.navigate([{
 			outlets: {
 				primary: ['message', 'Info', { title: 'Startup', message: 'Application Ready!!' }]
 			}
 		}]);
+	}
+
+	ngOnInit() {
 	}
 
 	ngOnDestroy() {

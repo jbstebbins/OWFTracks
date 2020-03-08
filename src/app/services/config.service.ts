@@ -19,6 +19,8 @@ export class ConfigService {
 	configModel: ConfigModel = null;
 	private baseUrl = 'assets/config.json';
 
+	memoryPersistence = {};
+
 	constructor(private http: HttpClient) {
 		this.retrieveConfig();
 	}
@@ -37,6 +39,18 @@ export class ConfigService {
 
 	getConfig() {
 		return this.configModel;
+	}
+
+	getMemoryValue(key) {
+		return this.memoryPersistence[key];
+	}
+
+	removeMemoryValue(key) {
+		delete this.memoryPersistence[key];
+	}
+
+	setMemoryValue(key, value) {
+		this.memoryPersistence[key] = value;
 	}
 
 	private handleError<T>(operation = 'operation', result?: T) {

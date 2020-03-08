@@ -1,17 +1,23 @@
-<div class="container" style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;">
-  <div class="row">
-    <div class="col-sm">
-      <div *ngIf="loadComponent">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch" (change)="searchListener($event)"
-        title="Enter Search Text..." />
+<div class="container" style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;">
+  <div class="row" style="height: 35px;">
+    <div class="col-md" style="margin-top: 5px;">
+      <div *ngIf="loadComponent && isDataValid">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch"
+          (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
+        <span style="float: right;height: 22px;display: flex;">
+          <p-colorPicker [(ngModel)]="color" [ngStyle]="{'height':'22px'}"></p-colorPicker>
+          <button pButton type="button" icon="pi pi-check" iconPos="left" styleClass="ui-button-info"
+            (click)="handleClick($event)" style="height: 23px;"></button>
+        </span>
       </div>
     </div>
-    <div class="col-sm">
+    <div class="col-md" style="margin-top: 5px;">
       <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
     </div>
-    <div class="col-sm">
+    <div class="col-md" style="margin-top: 5px;">
       <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (change)="uploadListener($event)"
         accept=".csv, .xls, .xslx" />
     </div>
   </div>
 </div>
-<app-csv-grid *ngIf="loadComponent" [gridData]="records"></app-csv-grid>
+<app-csv-grid *ngIf="loadComponent" [parentFileName]="filename" [parentData]="records" [parentMessage]="searchValue" [parentColor]="color">
+</app-csv-grid>

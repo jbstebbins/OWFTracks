@@ -18,7 +18,7 @@ export class MenuModel {
                 command: null
             },
             {
-                label: 'Connect Stream',
+                label: 'Connect FEATURE',
                 icon: 'pi pi-fw pi-list',
                 command: null
             }

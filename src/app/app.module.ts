@@ -14,6 +14,7 @@ import { MessageModule } from 'primeng/message';
 import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
 import { MenubarModule } from 'primeng/menubar';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { MenuComponent } from './components/menu/menu.component';
 import { GrowlerComponent } from './components/growler/growler.component';
@@ -21,12 +22,14 @@ import { PageNotFoundComponent } from './components/page-not-found/page-not-foun
 
 import { TrackCoreModule } from './modules/track/track-core.module';
 import { CsvCoreModule } from './modules/csv/csv-core.module';
+import { FeaturesCoreModule } from './modules/features/features-core.module';
 
 const routes: Routes = [
   { path: 'service', loadChildren: './modules/track/track-core.module#TrackCoreModule' },
   { path: 'service', loadChildren: './modules/csv/csv-core.module#CsvCoreModule' },
+  { path: 'service', loadChildren: './modules/features/features-core.module#FeaturesCoreModule' },
   { path: '', redirectTo: '/', pathMatch: 'full' },
-  { path: 'message/:type', component: GrowlerComponent },
+  { path: 'message/:severity', component: GrowlerComponent },
   { path: '**', component: PageNotFoundComponent, outlet: 'trackOutlet' },
   { path: '**', component: PageNotFoundComponent, outlet: 'errorOutlet' },
   { path: '**', redirectTo: 'message' }
@@ -51,8 +54,10 @@ const routes: Routes = [
     ToastModule,
     MenubarModule,
     ButtonModule,
+    DropdownModule,
     TrackCoreModule,
     CsvCoreModule,
+    FeaturesCoreModule,
     AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],

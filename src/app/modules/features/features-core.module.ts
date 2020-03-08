@@ -8,29 +8,28 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { TabViewModule } from 'primeng/tabview';
 import { CardModule } from 'primeng/card';
 import { PanelModule } from 'primeng/panel';
-import { ColorPickerModule } from 'primeng/colorpicker';
-import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { AgGridModule } from 'ag-grid-angular';
 import { SharedServicesModule } from '../shared-services/shared-services.module';
 
-import { CsvCoreComponent } from './csv-core/csv-core.component';
-import { CsvGridComponent } from './csv-grid/csv-grid.component';
+import { FeaturesCoreComponent } from './features-core/features-core.component';
+import { FeaturesGridComponent } from './features-grid/features-grid.component';
 
 const appRoutes: Routes = [
   {
-    path: 'service', component: CsvCoreComponent, outlet: 'trackOutlet',
+    path: 'service', component: FeaturesCoreComponent, outlet: 'trackOutlet',
     children: [
       {
-        path: 'connect.csv',
-        component: CsvCoreComponent
+        path: 'connect.feature',
+        component: FeaturesGridComponent
       }
     ]
   }
 ];
 
 @NgModule({
-  declarations: [CsvCoreComponent, CsvGridComponent],
+  declarations: [FeaturesCoreComponent, FeaturesGridComponent],
   imports: [
     CommonModule,
     RouterModule.forChild(appRoutes),
@@ -39,11 +38,10 @@ const appRoutes: Routes = [
     TabViewModule,
     CardModule,
     PanelModule,
-    ColorPickerModule,
-    ButtonModule,
+    DropdownModule,
     AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],
-  exports: [CsvCoreComponent, CsvGridComponent]
+  exports: [FeaturesCoreComponent, FeaturesGridComponent]
 })
-export class CsvCoreModule { }
+export class FeaturesCoreModule { }

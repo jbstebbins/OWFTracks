@@ -17,6 +17,7 @@ declare var Ozone: any;
 export class MapMessagesService {
   owfapi = new OwfApi();
   mapStatusView: Observable<MapViewModel> = null;
+  mapFeaturePlotUrl: Observable<MapViewModel> = null;
 
   constructor() {
     this.subscribeChannels();
@@ -27,9 +28,13 @@ export class MapMessagesService {
       this.owfapi.addChannelSubscription('map.status.view', this.receiveMapStatusView.bind(this, observer));
       this.owfapi.requestMapViewStatus();
     });    
+
+    this.mapFeaturePlotUrl = new Observable<any>((observer) => {
+      this.owfapi.addChannelSubscription('map.feature.plot.url', this.receiveMapFeaturePlotUrl.bind(this, observer));
+    });    
   }
 
-  getMapView(): Observable<MapViewModel> {
+  getMapStatusView(): Observable<MapViewModel> {
     return this.mapStatusView;
   }
 
@@ -60,5 +65,15 @@ export class MapMessagesService {
       message.mapId, message.requester, mTime);
 
     observer.next(mapStatusView);
+  }
+
+  getMapFeaturePlotUrl(): Observable<any> {
+    return this.mapFeaturePlotUrl;
+  }
+
+  receiveMapFeaturePlotUrl(observer, sender, msg, channel) {
+    let message = JSON.parse(msg);
+
+    observer.next(message);
   }
 }

@@ -28,7 +28,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
 					this.router.navigate([{
 					  outlets: {
-						primary: ['message', 'notice', { message: 'Displaying Status information!' }],
+						primary: ['message', 'Success', { title: 'Navigation', message: 'Connected to CSV Module!' }],
 						trackOutlet: ['service', 'connect.csv'],
 						errorOutlet: ['']
 					  }
@@ -38,15 +38,25 @@ export class AppComponent implements OnInit, OnDestroy {
 
 					this.router.navigate([{
 					  outlets: {
-						primary: ['message', 'notice', { message: 'Displaying Status information!' }],
+						primary: ['message', 'Success', { title: 'Navigation', message: 'Connected to Minotaur Module!' }],
 						trackOutlet: ['service', 'connect.rest'],
+						errorOutlet: ['']
+					  }
+					}]);		  
+				} else if (payload.action === "Connect FEATURE") {
+					this.menuOption = 'ServiceFeature';
+
+					this.router.navigate([{
+					  outlets: {
+						primary: ['message', 'Success', { title: 'Navigation', message: 'Connected to Layer Module!' }],
+						trackOutlet: ['service', 'connect.feature'],
 						errorOutlet: ['']
 					  }
 					}]);		  
 				} else {
 					this.router.navigate([{
 						outlets: {
-							primary: ['message', 'notice', { message: `${payload.action} received by AppComponent` }]
+							primary: ['message', 'Info', { title: 'Navigation', message: `${payload.action} received by AppComponent` }]
 						}
 					}]);
 				}
@@ -58,7 +68,7 @@ export class AppComponent implements OnInit, OnDestroy {
 		// this is required to initiate router for messaging
 		this.router.navigate([{
 			outlets: {
-				primary: ['message', 'notice', { message: 'Application Ready!!' }]
+				primary: ['message', 'Info', { title: 'Startup', message: 'Application Ready!!' }]
 			}
 		}]);
 	}

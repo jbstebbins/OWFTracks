@@ -12,6 +12,7 @@ import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
 import { CotMinotaurService } from '../../../services/cot-minotaur.service';
 import { MapMessagesService } from '../../../services/map-messages.service';
+import { ActionNotificationService } from '../../../services/action-notification.service';
 
 import {
   MapViewModel, Bounds, LatLon, TimeSpanTime, TimeSpan
@@ -30,11 +31,13 @@ import { CotToKmlWorker } from '../web-workers/cot-to-kml.worker';
   styleUrls: ['./cot-minotaur.component.css']
 })
 export class CotMinotaurComponent implements OnInit, OnDestroy {
+  subscription: Subscription;
+  mapStatusView: Subscription = null;
+
   owfApi = new OwfApi();
   worker: CotToKmlWorker;
 
   config: ConfigModel = null;
-  mapStatusView: Subscription = null;
   trackStatusInitial: Subscription = null;
   trackStatusInterval: Subscription = null;
   trackData: any = [];
@@ -54,10 +57,18 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
   domLayout = "normal";
   extent: any;
+  shutdown:boolean = false;
 
   constructor(private configService: ConfigService,
     private cotMinotaurSerice: CotMinotaurService,
-    private mapMessageService: MapMessagesService) {
+    private mapMessageService: MapMessagesService,
+    private notificationService: ActionNotificationService) {
+    this.subscription = notificationService.publisher$.subscribe(
+      payload => {
+        console.log(`${payload.action}, received by cot-minotaur.component`);
+      }
+    );
+
     this.gridOptions = <GridOptions>{
       rowData: this.rowData,
       columnDefs: this.createColumnDefs(),
@@ -73,9 +84,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    console.log("cot-minotaur initialized.");
     this.config = this.configService.getConfig();
 
-    this.mapStatusView = this.mapMessageService.getMapView().subscribe(
+    this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(
       mapView => {
         this.mapView = mapView;
 
@@ -101,7 +113,11 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
                 startWith(0),
                 switchMap(() => this.cotMinotaurSerice.getCotTracks("randomize", this.extent))
               ).subscribe(response => {
-                this.updateTrackData(response);
+                if ((this.shutdown === undefined) || (this.shutdown)) {
+                  this.trackStatusInterval.unsubscribe();
+                } else {
+                  this.updateTrackData(response);
+                }
               });
             }, 5000);
           });
@@ -308,6 +324,12 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    console.log("cot-minotaur destroyed.");
+    this.shutdown = true;
+
+    // prevent memory leak when component destroyed
+    this.subscription.unsubscribe();
+
     // prevent memory leak when component destroyed
     if (this.mapStatusView) {
       this.mapStatusView.unsubscribe();
@@ -456,21 +478,21 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
     this.columnDefinitions = [
       { field: 'id', hide: true },
       { field: 'featureType', sortable: true },
-      { field: 'name', sortable: true, filterable: true },
-      { field: 'type', sortable: true, filterable: true },
-      { field: 'category', sortable: true, filterable: true },
-      { field: 'class', sortable: true, filterable: true },
-      { field: 'alertLevel', sortable: true, filterable: true },
-      { field: 'threat', sortable: true, filterable: true },
+      { field: 'name', sortable: true, filter: true },
+      { field: 'type', sortable: true, filter: true },
+      { field: 'category', sortable: true, filter: true },
+      { field: 'class', sortable: true, filter: true },
+      { field: 'alertLevel', sortable: true, filter: true },
+      { field: 'threat', sortable: true, filter: true },
       { field: 'dimension', sortable: true },
-      { field: 'flag', sortable: true, filterable: true },
+      { field: 'flag', sortable: true, filter: true },
       { field: 'speed', sortable: true },
       { field: 'dtg', sortable: true },
       { field: 'altitude', sortable: true },
       { field: 'course', hide: true },
       { field: 'lat', hide: true },
       { field: 'lon', hide: true },
-      { field: 'classification', filterable: true }
+      { field: 'classification', filter: true }
     ];
 
     return this.columnDefinitions;

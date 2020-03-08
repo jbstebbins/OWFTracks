@@ -14,7 +14,7 @@
       <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
     </div>
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
-      <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (change)="uploadListener($event)"
+      <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (click)="fileSelectListener($event)" (change)="uploadListener($event)"
         accept=".csv, .xls, .xslx" />
     </div>
   </div>

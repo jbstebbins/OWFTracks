@@ -10,6 +10,39 @@ export class jsUtils {
         });
     }
 
+    public countChars(str, schar) {
+        let regex = new RegExp(schar, "gi");
+        return str.length - str.replace(regex, '').length;
+    }
+
+    public convertDMSDD(coordinates): number {
+        let dms = coordinates.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
+        var d = Number(dms[0]);
+        var m = Number(dms[1]);
+        var s = Number(dms[2].replace(/[NSEW]/gi, ""));
+        var dir = "+";
+        if (coordinates.includes("W") || coordinates.includes("S")) {
+            dir = "-";
+        }
+
+        var dd = (((dir === "-") ? -1 : 1) * d) + ((m / 60) + (s / 3600));
+        return dd;
+    }
+
+    public convertDDMDD(coordinates): number {
+        let ddm = coordinates.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
+
+        var d = Number(ddm[0]);
+        var m = Number(ddm[1].replace(/[NSEW]/gi, ""));
+        var dir = "+";
+        if (coordinates.includes("W") || coordinates.includes("S")) {
+            dir = "-";
+        }
+
+        var dd = (((dir === "-") ? -1 : 1) * d) + (m / 60);
+        return dd;
+    }
+
     public convertDDToDDM(latitude, longitude): string {
         return this.convertDDLatitudeToDDM(latitude) + ", " +
             this.convertDDLongitudeToDDM(longitude);
@@ -68,30 +101,38 @@ export class jsUtils {
             this.convertDDLongitudeToDDM(this.convertDMSLongitudeToDD(longitude))
     }
 
-    public convertDMSLongitudeToDD(longitide): string {
-        var dms = longitide.replace("°", "").replace("'", "").replace("\"", "").split(" ");
+    public convertDMSLongitudeToDD(longitude): number {
+        var dms = longitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(dms[0]);
         var m = Number(dms[1]);
-        var s = Number(dms[2].replace("E", "").replace("W", ""));
-        var dir = (dms[2].includes("E") ? "+" : "-");
+        var s = Number(dms[2].replace(/[EW]/gi, ""));
+
+        var dir = "+";
+        if (longitude.includes("W")) {
+            dir = "-";
+        }
 
         var dm = m + (s / 60);
         d = ((dir === "-") ? -1 : 1) * d;
         var dd = d + (dm / 60);
-        return dd.toFixed(8);
+        return dd;
     }
 
-    public convertDMSLatitudeToDD(latitude): string {
-        var dms = latitude.replace("°", "").replace("'", "").replace("\"", "").split(" ");
+    public convertDMSLatitudeToDD(latitude): number {
+        var dms = latitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
         var d = Number(dms[0]);
         var m = Number(dms[1]);
-        var s = Number(dms[2].replace("N", "").replace("S", ""));
-        var dir = (dms[2].includes("N") ? "+" : "-");
+        var s = Number(dms[2].replace(/[NS]/gi, ""));
+
+        var dir = "+";
+        if (latitude.includes("S")) {
+            dir = "-";
+        }
 
         var dm = m + (s / 60);
         d = ((dir === "-") ? -1 : 1) * d;
         var dd = d + (dm / 60);
-        return dd.toFixed(8);
+        return dd;
     }
 
     public convertDDMToDD(latitude, longitude): string {
@@ -104,26 +145,34 @@ export class jsUtils {
             this.convertDDLongitudeToDMS(this.convertDDMLongitudeToDD(longitude))
     }
 
-    public convertDDMLongitudeToDD(longitide): string {
-        var dms = longitide.replace("°", "").replace("'", "").split(" ");
-        var d = Number(dms[0]);
-        var m = Number(dms[1].replace("E", "").replace("W", ""));
-        var dir = (dms[1].includes("E") ? "+" : "-");
+    public convertDDMLongitudeToDD(longitude): number {
+        var ddm = longitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
+        var d = Number(ddm[0]);
+        var m = Number(ddm[1].replace(/[EW]/gi, ""));
+
+        var dir = "+";
+        if (longitude.includes("S")) {
+            dir = "-";
+        }
 
         d = ((dir === "-") ? -1 : 1) * d;
         var dd = d + (m / 60);
-        return dd.toFixed(8);
+        return dd;
     }
 
-    public convertDDMLatitudeToDD(latitude): string {
-        var dms = latitude.replace("°", "").replace("'", "").split(" ");
-        var d = Number(dms[0]);
-        var m = Number(dms[1].replace("N", "").replace("S", ""));
-        var dir = (dms[1].includes("N") ? "+" : "-");
+    public convertDDMLatitudeToDD(latitude): number {
+        var ddm = latitude.replace(/[^-\. 0-9a-z]/gi, '').split(" ");
+        var d = Number(ddm[0]);
+        var m = Number(ddm[1].replace(/[NS]/gi, ""));
+
+        var dir = "+";
+        if (latitude.includes("S")) {
+            dir = "-";
+        }
 
         d = ((dir === "-") ? -1 : 1) * d;
         var dd = d + (m / 60);
-        return dd.toFixed(8);
+        return dd;
     }
 
     // https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data

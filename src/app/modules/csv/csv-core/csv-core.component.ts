@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { ActionNotificationService } from '../../../services/action-notification.service';
@@ -24,12 +24,12 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   public loadStatus: string = "(no file selected!)";
   @ViewChild('csvStatus') csvStatus: ElementRef;
   @ViewChild('csvFileUpload') csvFileUpload: ElementRef;
-
   recordsLoaded = 0;
   recordsError = 0;
   recordsSelected = 0;
 
-  constructor(private notificationService: ActionNotificationService) {
+  constructor(private notificationService: ActionNotificationService,
+    private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
         console.log(`${payload.action}, received by csv-core.component`);
@@ -57,12 +57,14 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     console.log(`${payload.action}, pressed from csv-core.component`);
   }
 
+  fileSelectListener($event: any): void {
+    this.resetGrid();
+  }
+
   uploadListener($event: any): void {
     let files = $event.srcElement.files;
     let input = $event.target;
-
-    this.resetGrid();
-
+    
     if (this.isValidCSVFile(files[0])) {
       let reader = new FileReader();
 
@@ -145,7 +147,11 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   resetGrid() {
     this.records = [];
+
+    this.csvFileUpload.nativeElement.value = '';
     this.loadComponent = false;
+    this.cdr.detectChanges();
+
     this.loadStatus = "(no file selected!)";
   }
 }

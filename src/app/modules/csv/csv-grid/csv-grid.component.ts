@@ -16,6 +16,8 @@ import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
 import { ActionNotificationService } from '../../../services/action-notification.service';
 
+import { jsUtils } from '../../../library/jsUtils';
+
 @Component({
   selector: 'app-csv-grid',
   templateUrl: './csv-grid.component.html',
@@ -24,6 +26,7 @@ import { ActionNotificationService } from '../../../services/action-notification
 export class CsvGridComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
+  jsutils = new jsUtils();
   owfApi = new OwfApi();
   worker: CsvToKmlWorker;
 
@@ -268,6 +271,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     let record = {};
     let index = 0, validRecord = false;
     let columnValue = "";
+    let coordinates = "";
+    let count = 0;
     this.parentData.forEach((value) => {
       if (value) {
         record = {};
@@ -283,6 +288,21 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
         this.rowHeaders.forEach((header) => {
           record[header] = value[index++];
+
+          // convert lat/lon if needed
+          if ((header === this.columnTracking[1]) || (header === this.columnTracking[2])) {
+            coordinates = record[header];
+            count = this.jsutils.countChars(coordinates, " ");
+            console.log(coordinates, count);
+            
+            // dms to dd conversion when 2, DMM when 1
+            if (count === 2) {
+              record[header] = this.jsutils.convertDMSDD(coordinates);
+            } else if (count === 1) {
+              record[header] = this.jsutils.convertDDMDD(coordinates);
+            }
+
+          }
         });
 
         if (validRecord) {

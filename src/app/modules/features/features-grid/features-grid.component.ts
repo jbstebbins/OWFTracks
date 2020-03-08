@@ -72,7 +72,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       payload => {
         console.log(`${payload.action}, received by features-grid.component`);
         if (payload.action === "LYR SEARCH VALUE") {
-          console.log(payload.value);
           this.retrieveLayerData(payload.value.field, payload.value.value);
         }
       });
@@ -310,7 +309,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     }
 
     url += this.layerToken;
-    console.log(url);
 
     let urlRecorddata: Observable<any> = this.http
       .get<any>(url, { responseType: 'json' })
@@ -356,7 +354,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
   onSelectionChanged() {
     var selectedRows = this.gridApi.getSelectedRows();
-    console.log(selectedRows);
 
     if (selectedRows.length > 0) {
       this.plotTemporaryMarker(selectedRows[0]);

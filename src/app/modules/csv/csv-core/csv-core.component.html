@@ -1,6 +1,6 @@
 <div class="container" style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;">
   <div class="row" style="height: 35px;">
-    <div class="col-md" style="margin-top: 5px;">
+    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent && isDataValid">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch"
           (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
         <span style="float: right;height: 22px;display: flex;">
@@ -10,10 +10,10 @@
         </span>
       </div>
     </div>
-    <div class="col-md" style="margin-top: 5px;">
+    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
     </div>
-    <div class="col-md" style="margin-top: 5px;">
+    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (change)="uploadListener($event)"
         accept=".csv, .xls, .xslx" />
     </div>

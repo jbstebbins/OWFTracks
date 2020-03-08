@@ -48,12 +48,15 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   loadGrid: boolean = false;
 
   domLayout = "normal";
+  rowSelection = "single";
+
   rowData: any[] = [];
   rowGeomertyData: {};
   layerBaseUrl: string = "";
   layerToken: string = "";
   layerRecords: number = 0;
   layerFields: any[] = [];
+  layerTitleField: string = "";
   layerOffset: number = 0;
   layerMaxRecords: number = 1000;
   layerIDField: string = "";
@@ -140,9 +143,75 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       });
     });
 
-    // get the layer record count
-    // provide drop-down for layer fields
-    // pull first 50 records and display on grid
+    // create inline worker
+    this.worker = new LyrToKmlWorker(() => {
+      // START OF WORKER THREAD CODE
+
+      const kmlHeader = "<kml xmlns=\"http://www.opengis.net/kml/2.2\"> " +
+        "<Document> " +
+        "    <name>StyleMap.kml</name> " +
+        "    <open>1</open> ";
+      const kmlFooter = "</Document></kml>";
+
+      const plotMessage = {
+        "overlayId": "LYR-Viewer",
+        "featureId": "",
+        "feature": undefined,
+        "name": "",
+        "zoom": true
+      };
+
+      const formatKml = (data) => {
+        let kmlStyles =
+          "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
+
+        plotMessage.featureId = (data.filename + "_" + data.track[data.trackNameField]).replace(/ /gi, "_");
+        plotMessage.name = plotMessage.featureId;
+
+        // format and return to main thread
+        let kmlPayload = "";
+        kmlPayload += "<Placemark> " +
+          "<name>" + data.track[data.trackNameField] + "</name> " +
+          "<styleUrl>#csv_style</styleUrl> " +
+          "<Point><coordinates>" + data.geometry.x + "," + data.geometry.y + ",0" + "</coordinates></Point> ";
+
+        kmlPayload += "<ExtendedData>";
+        Object.keys(data.track).forEach((key, index) => {
+          let value = data.track[key];
+          if (((typeof value === "string") && (value !== undefined) && (value !== null)) &&
+            (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?"))) {
+            value = encodeURIComponent(value);
+          }
+          kmlPayload += "<Data name=\"" + key + "\"><value>" + value + "</value></Data>";
+        });
+        kmlPayload += "</ExtendedData></Placemark>";
+
+        plotMessage.feature = kmlHeader + kmlStyles + kmlPayload + kmlFooter;
+
+        // this is from DedicatedWorkerGlobalScope ( because of that we have postMessage and onmessage methods )
+        // and it can't see methods of this class
+        // @ts-ignore
+        postMessage({
+          status: "kml formatting complete", kml: plotMessage
+        });
+
+        plotMessage.feature = "";
+      };
+
+      // @ts-ignore
+      onmessage = (evt) => {
+        formatKml(evt.data);
+      };
+      // END OF WORKER THREAD CODE
+    });
+
+    this.worker.onmessage().subscribe((event) => {
+      this.owfApi.sendChannelRequest("map.feature.plot", event.data.kml);
+    });
+
+    this.worker.onerror().subscribe((data) => {
+      console.log(data);
+    });
   }
 
   ngOnDestroy() {
@@ -160,7 +229,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     this.columnDefinitions = [];
 
     let fieldList = "";
+    let itemNameTemp = "";
     this.layerFields.forEach((item) => {
+      itemNameTemp = item.name.toLowerCase();
+      if (itemNameTemp.includes("name") || itemNameTemp.includes("title")) {
+        this.layerTitleField = item.name;
+      }
+
       if (item.type === "esriFieldTypeOID") {
         this.layerIDField = item.name;
       }
@@ -175,6 +250,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         });
       }
     });
+
+    if (this.layerTitleField === "") {
+      this.layerTitleField = this.layerIDField;
+    }
 
     this.loadGrid = true;
 
@@ -220,7 +299,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       //"&orderByFields=" + this.layerIDField +
       //"&resultOffset=" + this.layerOffset +
       //"&resultRecordCount=" + this.layerMaxRecords +
-      "&outSR=102100" +
+      "&outSR=4326" +
       "&spatialRel=esriSpatialRelIntersects";
 
     // add field filters if required
@@ -272,6 +351,26 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       } else {
         alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
       }
+    });
+  }
+
+  onSelectionChanged() {
+    var selectedRows = this.gridApi.getSelectedRows();
+    console.log(selectedRows);
+
+    if (selectedRows.length > 0) {
+      this.plotTemporaryMarker(selectedRows[0]);
+    }
+  }
+
+  plotTemporaryMarker(selectedRow) {
+    let oid = selectedRow[this.layerIDField];
+    let geometry = this.rowGeomertyData[oid];
+
+    this.worker.postMessage({
+      filename: this.parentLayer.name, trackNameField: this.layerTitleField,
+      track: selectedRow,
+      color: "#ff0000", geometry: geometry
     });
   }
 

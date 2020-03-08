@@ -49,6 +49,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   filterActive: boolean = false;
 
   domLayout = "normal";
+  rowSelection = "single";
 
   @Input()
   parentFileName: string;
@@ -130,7 +131,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
       const formatKml = (data) => {
         let kmlStyles =
-        "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
+          "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
 
         plotMessage.featureId = data.filename;
         plotMessage.name = data.filename;
@@ -145,7 +146,14 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
           kmlPayload += "<ExtendedData>";
           Object.keys(track).forEach((key, index) => {
-            kmlPayload += "<Data name=\"" + key + "\"><value>" + track[key] + "</value></Data>";
+            let value = track[key];
+
+            if (((typeof value === "string") && (value !== undefined) && (value !== null)) &&
+              (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?"))) {
+              value = encodeURIComponent(value);
+            }
+
+            kmlPayload += "<Data name=\"" + key + "\"><value>" + value + "</value></Data>";
           });
           kmlPayload += "</ExtendedData></Placemark>";
         });
@@ -294,7 +302,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             coordinates = record[header];
             count = this.jsutils.countChars(coordinates, " ");
             console.log(coordinates, count);
-            
+
             // dms to dd conversion when 2, DMM when 1
             if (count === 2) {
               record[header] = this.jsutils.convertDMSDD(coordinates);
@@ -317,5 +325,10 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
   paginationNumberFormatter(params) {
     return "[" + params.value.toLocaleString() + "]";
+  }
+
+  onSelectionChanged() {
+    var selectedRows = this.gridApi.getSelectedRows();
+    console.log(selectedRows);
   }
 }

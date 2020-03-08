@@ -56,6 +56,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   cacheRowData: any[] = [];
 
   domLayout = "normal";
+  rowSelection = "single";
+
   extent: any;
   shutdown:boolean = false;
 
@@ -512,5 +514,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
 
   paginationNumberFormatter(params) {
     return "[" + params.value.toLocaleString() + "]";
+  }
+
+  onSelectionChanged() {
+    var selectedRows = this.gridApi.getSelectedRows();
+    console.log(selectedRows);
   }
 }

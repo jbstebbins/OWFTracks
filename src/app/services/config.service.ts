@@ -27,7 +27,7 @@ export class ConfigService {
 
 	private retrieveConfig(): void {
 		this.config = this.http
-			.get<ConfigModel>(this.baseUrl, { responseType: 'json' })
+			.get<ConfigModel>(this.baseUrl, { responseType: 'json', withCredentials: true })
 			.pipe(
 				catchError(this.handleError('retrieveConfig', [])),
 				tap(console.log));

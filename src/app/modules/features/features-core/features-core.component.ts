@@ -36,7 +36,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     'z-index': 9, 
     'background-color': '#f1f1f1', 
     'border': '1px solid #d3d3d3',
-    'text-align': 'center'
+    'text-align': 'center',
+    'width': '20%',
+    'font-weight': 'bolder',
+    'font-size': '14px'
   }
 
   subscription: Subscription;
@@ -274,7 +277,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   gridDragDrop(event) {
     event.preventDefault();
-
     this.divDragDropCss.display = 'none';
 
     var userAgent = window.navigator.userAgent;
@@ -288,7 +290,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
     let newItem = {
       id: this.jsutils.uuidv4(),
-      title: data[this.layerFieldsId] + "/" + data[this.layerFieldsTitle] + " (" + this.layerSelected.title + ")",
+      title: data[this.layerFieldsTitle] + " (" + this.layerSelected.title + ")" + "/" + data[this.layerFieldsId],
       name: this.layerSelected.title,
       service: "",
       uuid: this.layerSelected.uuid
@@ -318,9 +320,18 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   divDragOver(event) {
     console.log(event);
+    var dragSupported = event.dataTransfer.types.length;
+
+    if (dragSupported) {
+      event.dataTransfer.dropEffect = "copy";
+      event.preventDefault();
+    }
   }
 
   divDragDrop(event) { 
+    event.preventDefault();
+    this.divDragDropCss.display = 'none';
+
     console.log(event);
   }
 

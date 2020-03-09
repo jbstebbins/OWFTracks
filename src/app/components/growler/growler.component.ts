@@ -16,8 +16,6 @@ export class GrowlerComponent implements OnInit {
 
   ngOnInit() {
     this.route.params.subscribe(params => {
-      console.log(params);
-
       if (params.hasOwnProperty('severity')) {
         this.messageService.add({ severity: params.severity, summary: params.title, detail: params.message });
       }

@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy, ElementRef, Input, ViewChild } from '@angular/core';
-import { Observable, Observer, of, Subject, EMPTY, Subscription, interval } from 'rxjs';
-import { catchError, map, filter, startWith, switchMap, tap } from 'rxjs/operators';
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
 
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 import * as _ from 'lodash';
 import { OwfApi } from '../../../library/owf-api';
@@ -35,6 +35,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   worker: LyrToKmlWorker;
 
   config: ConfigModel = null;
+  credentialsRequired: boolean = false;
+  connectionFailure: boolean = false;
 
   @ViewChild('agGridLYR') agGrid: AgGridAngular;
 
@@ -88,59 +90,17 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     this.layerToken = "";
     if (urlArray.length > 1) {
       urlParamArray = urlArray[1].split("&");
-      if (urlParamArray.length > 1) {
+      if (urlParamArray.length >= 1) {
         urlParamArray.forEach((value, index) => {
-          if (value.startWith("token=")) {
+          if (value.startsWith("token=")) {
             this.layerToken = "&" + value;
           }
         });
       }
     }
 
-    // get the layer definition
-    let url = this.layerBaseUrl + "?" + "f=json" + this.layerToken;
-    let urlMetadata: Observable<any> = this.http
-      .get<any>(url, { responseType: 'json' })
-      .pipe(
-        catchError(this.handleError('retrieveConfig', [])),
-        tap(console.log));
-
-    let urlMetadataSubscription = urlMetadata.subscribe(model => {
-      this.layerFields = model.fields;
-      this.layerAdvancedFeatures = model.advancedQueryCapabilities;
-      urlMetadataSubscription.unsubscribe();
-
-      // build the grid layout
-      this.gridOptions = <GridOptions>{
-        rowData: this.rowData,
-        columnDefs: this.createColumnDefs(),
-        context: {
-          componentParent: this
-        },
-        pagination: true
-      };
-
-      // retrieve the record count
-      let url = this.layerBaseUrl + "/query?" + "f=json" +
-        "&where=1%3D1" +
-        "&returnGeometry=false" +
-        "&returnCountOnly=true" +
-        this.layerToken;
-      let urlRecordCountdata: Observable<any> = this.http
-        .get<any>(url, { responseType: 'json' })
-        .pipe(
-          catchError(this.handleError('retrieveConfig', [])),
-          tap(console.log));
-
-      let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
-        urlRecordCountSubscription.unsubscribe();
-
-        this.layerRecords = model.count;
-        this.notificationService.publisherAction({ action: 'LYR TOTAL COUNT', value: model.count });
-
-        this.retrieveLayerData();
-      });
-    });
+    // get layer info
+    this.getLayerInfo();
 
     // create inline worker
     this.worker = new LyrToKmlWorker(() => {
@@ -267,11 +227,99 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getLayerInfo() {
+    // get the layer definition
+    let url = this.layerBaseUrl + "?" + "f=json" + this.layerToken;
+    let urlMetadata: Observable<any>;
+
+    this.connectionFailure = true;
+    if (!this.credentialsRequired) {
+      urlMetadata = this.http
+        .get<any>(url, { responseType: 'json' })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    } else {
+      urlMetadata = this.http
+        .get<any>(url, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    }
+
+    // handle error
+    let urlMetadataSubscription = urlMetadata.subscribe(
+      response => {
+        this.connectionFailure = false;
+
+        this.layerFields = response.fields;
+        this.layerAdvancedFeatures = response.advancedQueryCapabilities;
+        urlMetadataSubscription.unsubscribe();
+
+        // build the grid layout
+        this.gridOptions = <GridOptions>{
+          rowData: this.rowData,
+          columnDefs: this.createColumnDefs(),
+          context: {
+            componentParent: this
+          },
+          pagination: true
+        };
+
+        // retrieve the record count
+        let url = this.layerBaseUrl + "/query?" + "f=json" +
+          "&where=1%3D1" +
+          "&returnGeometry=false" +
+          "&returnCountOnly=true" +
+          this.layerToken;
+        let urlRecordCountdata: Observable<any>;
+
+        if (!this.credentialsRequired) {
+          urlRecordCountdata = this.http
+            .get<any>(url, { responseType: 'json' })
+            .pipe(
+              retryWhen(errors => errors.pipe(delay(2000), take(2))),
+              catchError(this.handleError),
+              tap(console.log));
+        } else {
+          urlRecordCountdata = this.http
+            .get<any>(url, { responseType: 'json', withCredentials: true })
+            .pipe(
+              retryWhen(errors => errors.pipe(delay(2000), take(2))),
+              catchError(this.handleError),
+              tap(console.log));
+        }
+
+        let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
+          urlRecordCountSubscription.unsubscribe();
+
+          this.layerRecords = model.count;
+          this.notificationService.publisherAction({ action: 'LYR TOTAL COUNT', value: model.count });
+
+          this.retrieveLayerData();
+        });
+      },
+      error => console.log('HTTP Error', error),
+      () => {
+        if (!this.connectionFailure) {
+          console.log('HTTP request completed.');
+        } else if (!this.credentialsRequired) {
+          this.credentialsRequired = true;
+          this.getLayerInfo();
+        } else {
+          window.alert('Search Widget: HTTP other layer error; not trapped.');
+        }
+      });
+  }
+
   private createColumnDefs() {
     this.columnDefinitions = [];
 
     let fieldList = "";
     let itemNameTemp = "";
+    let newItem;
     this.layerFields.forEach((item) => {
       itemNameTemp = item.name.toLowerCase();
       if (itemNameTemp.includes("name") || itemNameTemp.includes("title")) {
@@ -285,12 +333,20 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       if (item.type !== "esriFieldTypeGeometry") {
         fieldList += item.name + ",";
 
-        this.columnDefinitions.push({
+        newItem = {
           field: item.name,
           sortable: true,
           filter: true,
           dndSource: (item.name === this.layerIDField)
-        });
+        };
+
+        if (item.name === this.layerIDField) {
+          this.columnDefinitions.splice(0, 0, newItem);
+        } else if (item.name === this.layerTitleField) {
+          this.columnDefinitions.splice(1, 0, newItem);
+        } else {
+          this.columnDefinitions.push(newItem);
+        }
       }
     });
 
@@ -356,12 +412,23 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     }
 
     url += this.layerToken;
+    let urlRecorddata: Observable<any>;
 
-    let urlRecorddata: Observable<any> = this.http
-      .get<any>(url, { responseType: 'json' })
-      .pipe(
-        catchError(this.handleError('retrieveConfig', [])),
-        tap(console.log));
+    if (!this.credentialsRequired) {
+      urlRecorddata = this.http
+        .get<any>(url, { responseType: 'json' })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    } else {
+      let urlRecorddata: Observable<any> = this.http
+        .get<any>(url, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    }
 
     let urlRecordSubscription = urlRecorddata.subscribe(model => {
       urlRecordSubscription.unsubscribe();
@@ -418,15 +485,17 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     });
   }
 
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    if (error.error instanceof ErrorEvent) {
+      // client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
 
-      // TODO: send the error to remote logging infrastructure
-      console.error(error); // log to console instead
-
-      // Let the app keep running by returning an empty result.
-      return of(result as T);
-    };
+    return throwError(errorMessage);
   }
 
 }

@@ -1,7 +1,11 @@
-import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectorRef, Input, ViewChild } from '@angular/core';
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap } from 'rxjs/operators';
 
-import { SelectItem } from 'primeng/api';
+import { GridOptions } from "ag-grid-community";
+import { AllCommunityModules, Module } from "@ag-grid-community/all-modules";
+
+import { AgGridAngular } from 'ag-grid-angular';
 
 import * as _ from 'lodash';
 import { jsUtils } from '../../../library/jsUtils';
@@ -34,6 +38,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   layerFields: any[] = [];
   layerFieldSelected: Track;
+  layerFieldsId: string;
+  layerFieldsTitle: string;
 
   layers: any[] = [];
   layersDefinition: any[] = [];
@@ -49,6 +55,20 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   @ViewChild('lyrStatus') lyrStatus: ElementRef;
   layerDefinition: any;
   shutdown: boolean = false;
+
+  gridApi;
+  gridColumnApi;
+  getRowNodeId;
+  gridOptions: GridOptions;
+  columnDefinitionsMonitor: any = [];
+  paginationPageSize: 25;
+  agmodules: Module[] = AllCommunityModules;
+  loadGrid: boolean = false;
+
+  domLayout = "normal";
+  rowSelection = "single";
+
+  rowDataMonitor: any[] = [];
 
   constructor(private configService: ConfigService,
     private mapMessageService: MapMessagesService,
@@ -68,7 +88,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           console.log(payload);
           this.layerFields = [];
 
-          let fields = payload.value.split(",");
+          this.layerFieldsId = payload.value.id;
+          this.layerFieldsTitle = payload.value.title;
+
+          let fields = payload.value.fields.split(",");
           let newFields = [];
           fields.forEach((value, index) => {
             if (value !== "") {
@@ -82,8 +105,16 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         }
 
         this.loadStatus = "(total records-" + this.layerRecords + "/ partial view-" + this.layerPartial + ")";
-      }
-    );
+      });
+
+    this.gridOptions = <GridOptions>{
+      rowData: this.rowDataMonitor,
+      columnDefs: this.createColumnDefs(),
+      context: {
+        componentParent: this
+      },
+      pagination: true
+    };
   }
 
   ngOnInit() {
@@ -98,7 +129,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
       if (this.layerSelected !== undefined) {
         this.selectedLayer({ originalEvent: null, value: this.layerSelected });
-      }      
+      }
     }
 
     // subscribe to catalog/map integration
@@ -156,6 +187,40 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
   }
 
+  private createColumnDefs() {
+    this.columnDefinitionsMonitor = [
+      { field: 'id', hide: true },
+      { field: 'title', sortable: true },
+      { field: 'name', hide: true },
+      { field: 'service', hide: true },
+      { field: 'uuid', hide: true }
+    ];
+
+    return this.columnDefinitionsMonitor;
+  }
+
+  onGridReady(params) {
+    console.log("features-core ready.");
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+
+    this.updateGridData();
+  }
+
+  private updateGridData() {
+  }
+
+  onFirstDataRendered(params) {
+  }
+
+  paginationNumberFormatter(params) {
+    return "[" + params.value.toLocaleString() + "]";
+  }
+
+  onSelectionChanged() {
+    var selectedRows = this.gridApi.getSelectedRows();
+  }
+
   searchListener($event: any): void {
     if ($event.key === "Enter") {
       this.searchValue = $event.target.value;
@@ -184,5 +249,46 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         this.loadComponent = true;
       }
     });
+  }
+
+  gridDragOver(event) {
+    var dragSupported = event.dataTransfer.types.length;
+
+    if (dragSupported) {
+        event.dataTransfer.dropEffect = "copy";
+        event.preventDefault();
+    }
+  }
+
+  gridDrop(event) {
+    event.preventDefault();
+
+    var userAgent = window.navigator.userAgent;
+    var isIE = userAgent.indexOf('Trident/') >= 0;
+    var jsonData = event.dataTransfer.getData(isIE ? 'text' : 'application/json');
+    var data = JSON.parse(jsonData);
+
+    console.log(this.layersDefinition, this.layerSelected);
+    console.log(this.layerFieldsId, this.layerFieldsTitle, data);
+    /*
+    // if data missing or data has no it, do nothing
+    if (!data || data.id == null) {
+        return;
+    }
+
+    var gridApi = grid == 'left' ? this.leftGridOptions.api : this.rightGridOptions.api;
+
+    // do nothing if row is already in the grid, otherwise we would have duplicates
+    var rowAlreadyInGrid = !!gridApi.getRowNode(data.id);
+    if (rowAlreadyInGrid) {
+        console.log('not adding row to avoid duplicates in the grid');
+        return;
+    }
+
+    var transaction = {
+        add: [data]
+    };
+    //gridApi.updateRowData(transaction);
+    */
   }
 }

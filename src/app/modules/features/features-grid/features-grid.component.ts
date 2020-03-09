@@ -157,12 +157,18 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         "featureId": "",
         "feature": undefined,
         "name": "",
-        "zoom": true
+        "zoom": true,
+        "params": {
+          "opacity": 0.4,
+          "showLabels": true
+        }
       };
 
       const formatKml = (data) => {
         let kmlStyles =
-          "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
+          "      <Style id=\"lyrpoint\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+          "      <Style id=\"lyrpolyline\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle></Style> " +
+          "      <Style id=\"lyrpolygon\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle><PolyStyle><color>#a00000</color><outline>0</outline><fill>1</fill></PolyStyle></Style> ";
 
         plotMessage.featureId = (data.filename + "_" + data.track[data.trackNameField]).replace(/ /gi, "_");
         plotMessage.name = plotMessage.featureId;
@@ -170,9 +176,46 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         // format and return to main thread
         let kmlPayload = "";
         kmlPayload += "<Placemark> " +
-          "<name>" + data.track[data.trackNameField] + "</name> " +
-          "<styleUrl>#csv_style</styleUrl> " +
-          "<Point><coordinates>" + data.geometry.x + "," + data.geometry.y + ",0" + "</coordinates></Point> ";
+          "<name>" + data.track[data.trackNameField] + "</name> ";
+
+        // format geometry correctly based on type Point=(x,y); Polylines=(paths:[[[],[],[],[]],...]), Polygons=(rings:[[[],[],[],[]],[[],[],[],[]],...])
+        // https://developers.arcgis.com/documentation/core-concepts/features-and-geometries/
+        if (data.geometry.hasOwnProperty("x") && data.geometry.hasOwnProperty("y")) {
+          kmlPayload += "<styleUrl>#lyrpoint</styleUrl> <Point><coordinates>" + data.geometry.x + "," + data.geometry.y + ",0" + "</coordinates></Point> ";
+        } else if (data.geometry.hasOwnProperty("paths")) {
+          kmlPayload += "<styleUrl>#lyrpolyline</styleUrl> ";
+          data.geometry.paths.forEach((pathsArray) => {
+            kmlPayload += "<LineString><tessellate>1</tessellate><coordinates>";
+            pathsArray.forEach((pathArray) => {
+              kmlPayload += pathArray[0] + "," + pathArray[1] + ",0 ";
+            });
+            kmlPayload += "</coordinates></LineString> ";
+          });
+        } else if (data.geometry.hasOwnProperty("rings")) {
+          kmlPayload += "<styleUrl>#lyrpolygon</styleUrl> ";
+
+          let ringsArray = data.geometry.rings;
+          let ringArray = [];
+          kmlPayload += "<Polygon>";
+          for (let i = 0; i < ringsArray.length; i++) {
+            if (i === 0) {
+              kmlPayload += "<outerBoundaryIs><LinearRing><coordinates>";
+              ringArray = ringsArray[i];
+              ringArray.forEach((point) => {
+                kmlPayload += point[0] + "," + point[1] + ",0 ";
+              });
+              kmlPayload += "</coordinates></LinearRing></outerBoundaryIs>";
+            } else {
+              kmlPayload += "<innerBoundaryIs><LinearRing><coordinates>";
+              ringArray = ringsArray[i];
+              ringArray.forEach((point) => {
+                kmlPayload += point[0] + "," + point[1] + ",0 ";
+              });
+              kmlPayload += "</coordinates></LinearRing></innerBoundaryIs>";
+            }
+          }
+          kmlPayload += "</Polygon> ";
+        }
 
         kmlPayload += "<ExtendedData>";
         Object.keys(data.track).forEach((key, index) => {
@@ -245,7 +288,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         this.columnDefinitions.push({
           field: item.name,
           sortable: true,
-          filter: true
+          filter: true,
+          dndSource: (item.name === this.layerIDField)
         });
       }
     });
@@ -256,7 +300,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
     this.loadGrid = true;
 
-    this.notificationService.publisherAction({ action: 'LYR FIELD LIST', value: fieldList });
+    this.notificationService.publisherAction({
+      action: 'LYR FIELD LIST',
+      value: { fields: fieldList, id: this.layerIDField, title: this.layerTitleField }
+    });
     return this.columnDefinitions;
   }
 

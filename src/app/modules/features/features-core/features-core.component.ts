@@ -30,6 +30,15 @@ interface Track {
   styleUrls: ['./features-core.component.css']
 })
 export class FeaturesCoreComponent implements OnInit, OnDestroy {
+  divDragDropCss = {
+    'display': 'none', 
+    'position': 'absolute', 
+    'z-index': 9, 
+    'background-color': '#f1f1f1', 
+    'border': '1px solid #d3d3d3',
+    'text-align': 'center'
+  }
+
   subscription: Subscription;
   mapFeaturePlotUrl: Subscription = null;
 
@@ -53,6 +62,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   public loadStatus: string = "(no layer selected!)";
   public searchValue: string;
   @ViewChild('lyrStatus') lyrStatus: ElementRef;
+  @ViewChild('gridRemove') gridRemove: ElementRef;
   layerDefinition: any;
   shutdown: boolean = false;
 
@@ -190,7 +200,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { field: 'title', sortable: true },
+      { field: 'title', sortable: true, dndSource: true },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }
@@ -255,40 +265,63 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     var dragSupported = event.dataTransfer.types.length;
 
     if (dragSupported) {
-        event.dataTransfer.dropEffect = "copy";
-        event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      event.preventDefault();
+
+      this.divDragDropCss.display = 'block';
     }
   }
 
-  gridDrop(event) {
+  gridDragDrop(event) {
     event.preventDefault();
+
+    this.divDragDropCss.display = 'none';
 
     var userAgent = window.navigator.userAgent;
     var isIE = userAgent.indexOf('Trident/') >= 0;
     var jsonData = event.dataTransfer.getData(isIE ? 'text' : 'application/json');
     var data = JSON.parse(jsonData);
 
-    console.log(this.layersDefinition, this.layerSelected);
-    console.log(this.layerFieldsId, this.layerFieldsTitle, data);
-    /*
-    // if data missing or data has no it, do nothing
-    if (!data || data.id == null) {
-        return;
+    if (!data || (data[this.layerFieldsId] === undefined) || (data[this.layerFieldsTitle] === undefined)) {
+      return;
     }
 
-    var gridApi = grid == 'left' ? this.leftGridOptions.api : this.rightGridOptions.api;
+    let newItem = {
+      id: this.jsutils.uuidv4(),
+      title: data[this.layerFieldsId] + "/" + data[this.layerFieldsTitle] + " (" + this.layerSelected.title + ")",
+      name: this.layerSelected.title,
+      service: "",
+      uuid: this.layerSelected.uuid
+    };
+
+    this.layersDefinition.forEach((layer) => {
+      if (layer.uuid == newItem.uuid) {
+        newItem.service = layer;
+      }
+    });
 
     // do nothing if row is already in the grid, otherwise we would have duplicates
-    var rowAlreadyInGrid = !!gridApi.getRowNode(data.id);
-    if (rowAlreadyInGrid) {
-        console.log('not adding row to avoid duplicates in the grid');
-        return;
-    }
+    let duplicateRow = false;
+    this.rowDataMonitor.forEach((row) => {
+      if ((row.service === newItem.service) && (row.title === newItem.title)) {
+        duplicateRow = true;
+      }
+    });
 
-    var transaction = {
-        add: [data]
-    };
-    //gridApi.updateRowData(transaction);
-    */
+    if (!duplicateRow) {
+      let records = [...this.rowDataMonitor, newItem];
+      this.rowDataMonitor = records;
+    } else {
+      console.log("duplicate row, skipping.");
+    }
   }
+
+  divDragOver(event) {
+    console.log(event);
+  }
+
+  divDragDrop(event) { 
+    console.log(event);
+  }
+
 }

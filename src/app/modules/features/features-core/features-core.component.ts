@@ -12,6 +12,7 @@ import { jsUtils } from '../../../library/jsUtils';
 import { OwfApi } from '../../../library/owf-api';
 
 import { ActionNotificationService } from '../../../services/action-notification.service';
+import { PreferencesService } from '../../../services/preferences.service';
 
 import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
@@ -31,10 +32,10 @@ interface Track {
 })
 export class FeaturesCoreComponent implements OnInit, OnDestroy {
   divDragDropCss = {
-    'display': 'none', 
-    'position': 'absolute', 
-    'z-index': 9, 
-    'background-color': '#f1f1f1', 
+    'display': 'none',
+    'position': 'absolute',
+    'z-index': 9,
+    'background-color': '#f1f1f1',
     'border': '1px solid #d3d3d3',
     'text-align': 'center',
     'width': '20%',
@@ -86,6 +87,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   constructor(private configService: ConfigService,
     private mapMessageService: MapMessagesService,
     private notificationService: ActionNotificationService,
+    private preferencesService: PreferencesService,
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
@@ -98,7 +100,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         } else if (payload.action === "LYR ALL DATA") {
           this.layerPartial = this.layerRecords;
         } else if (payload.action === "LYR FIELD LIST") {
-          console.log(payload);
           this.layerFields = [];
 
           this.layerFieldsId = payload.value.id;
@@ -132,7 +133,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     console.log("features-core initialized.");
-    console.log(this.configService.memoryPersistence);
 
     // recall memory if present and activate
     if (this.configService.getMemoryValue("layers") !== undefined) {
@@ -153,32 +153,34 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           let layerDefinition = message;
           layerDefinition["uuid"] = this.jsutils.uuidv4();
 
-          // check for duplication
-          let duplicate = false;
-          this.layers.forEach((value, index) => {
-            if (value.title === layerDefinition.name) {
-              duplicate = true;
-              console.log("duplicate layer - " + value.title + "/layer not added.");
-            }
-          });
+          // skip self-adding of layers
+          if (layerDefinition.overlayId !== "LYR-Monitor") {
+            // check for duplication
+            let duplicate = false;
+            this.layers.forEach((value, index) => {
+              if (value.title === (layerDefinition.name + "/" + layerDefinition.overlayId)) {
+                duplicate = true;
+                console.log("duplicate layer - " + value.title + "/layer not added.");
+              }
+            });
 
-          let newItem = { title: layerDefinition.name, uuid: layerDefinition.uuid };
+            let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
 
-          if (!duplicate) {
-            // trigger angular binding
-            this.layers = [...this.layers, newItem];
-            this.layersDefinition = [...this.layersDefinition, layerDefinition];
+            if (!duplicate) {
+              // trigger angular binding
+              this.layers = [...this.layers, newItem];
+              this.layersDefinition = [...this.layersDefinition, layerDefinition];
 
-            // save to memory for recall
-            this.configService.setMemoryValue("layers", this.layers);
-            this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
+              // save to memory for recall
+              this.configService.setMemoryValue("layers", this.layers);
+              this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
 
-            console.log(this.configService.memoryPersistence);
-            // if first time
-            if (this.layers.length === 1) {
-              this.selectedLayer({ originalEvent: null, value: newItem });
-            } else {
-              this.loadComponent = true;
+              // if first time
+              if (this.layers.length === 1) {
+                this.selectedLayer({ originalEvent: null, value: newItem });
+              } else {
+                this.loadComponent = true;
+              }
             }
           }
         } else {
@@ -221,6 +223,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   private updateGridData() {
+    // load the last state of the active.state
+    let restoreSettingsObservable: Observable<any> = this.preferencesService.getPreference("track.search.filter",
+      "active.state");
+    let restoreSettings = restoreSettingsObservable.subscribe(model => {
+      restoreSettings.unsubscribe();
+
+      let records = JSON.parse(model.value);
+      this.rowDataMonitor = [...records];
+    });
   }
 
   onFirstDataRendered(params) {
@@ -245,8 +256,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   selectedLayer($event: any): void {
-    console.log($event.value, this.layerSelected);
-
     this.layerSelected = $event.value;
     this.configService.setMemoryValue("layerSelected", this.layerSelected);
 
@@ -255,9 +264,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     this.layersDefinition.forEach((value, index) => {
-      console.log(value.uuid, this.layerSelected.uuid);
       if (value.uuid === this.layerSelected.uuid) {
-        console.log("------");
         this.layer = value;
         this.loadComponent = true;
       }
@@ -292,12 +299,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       id: this.jsutils.uuidv4(),
       title: data[this.layerFieldsTitle] + " (" + this.layerSelected.title + ")" + "/" + data[this.layerFieldsId],
       name: this.layerSelected.title,
-      service: "",
-      uuid: this.layerSelected.uuid
+      esriOIDFieldname: this.layerFieldsId,
+      esriOIDValue: data[this.layerFieldsId],
+      service: ""
     };
 
     this.layersDefinition.forEach((layer) => {
-      if (layer.uuid == newItem.uuid) {
+      if (layer.uuid == this.layerSelected.uuid) {
         newItem.service = layer;
       }
     });
@@ -313,13 +321,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     if (!duplicateRow) {
       let records = [...this.rowDataMonitor, newItem];
       this.rowDataMonitor = records;
+
+      this.publishLayers();
     } else {
       console.log("duplicate row, skipping.");
     }
   }
 
   divDragOver(event) {
-    console.log(event);
     var dragSupported = event.dataTransfer.types.length;
 
     if (dragSupported) {
@@ -328,11 +337,92 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
   }
 
-  divDragDrop(event) { 
+  divDragDrop(event) {
     event.preventDefault();
     this.divDragDropCss.display = 'none';
 
-    console.log(event);
+    var userAgent = window.navigator.userAgent;
+    var isIE = userAgent.indexOf('Trident/') >= 0;
+    var jsonData = event.dataTransfer.getData(isIE ? 'text' : 'application/json');
+    var data = JSON.parse(jsonData);
+
+    if (!data || (data.service === undefined)) {
+      return;
+    }
+
+    // find the record to remove
+    let deleteId;
+    this.rowDataMonitor.forEach((row, index) => {
+      if (row.id === data.id) {
+        deleteId = index;
+      }
+    });
+
+    // delete the record
+    if (deleteId) {
+      this.rowDataMonitor.splice(deleteId, 1);
+
+      let records = [...this.rowDataMonitor];
+      this.rowDataMonitor = records;
+    }
+
+    this.publishLayers();
   }
 
+  publishLayers() {
+    // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
+    let services = {};
+    let service;
+
+    this.rowDataMonitor.forEach((row, index) => {
+      if (services[row.service.uuid] === undefined) {
+        service = {
+          service: row.service,
+          esriOIDFieldname: row.esriOIDFieldname,
+          idList: [row.esriOIDValue]
+        }
+
+        services[row.service.uuid] = service;
+      } else {
+        services[row.service.uuid].idList.push(row.esriOIDValue);
+      }
+    });
+
+    let plotMessage = {};
+    let value;
+    Object.keys(services).forEach((layer) => {
+      value = services[layer];
+
+      plotMessage = {
+        "overlayId": "LYR-Monitor",
+        "featureId": "LYR-Monitor_" + value.service.featureId,
+        "name": value.service.name,
+        "format": "arcgis-feature",
+        "params": {
+          "serviceType": "feature",
+          "format": "image/png",
+          "refreshInterval": "0.10",
+          "zoom": "false",
+          "showLabels": "false",
+          "opacity": 0.5,
+          "transparent": "true",
+          "useProxy": "false",
+          "layers": "5",
+          "mode": "ondemand",
+          "definitionExpression": value.esriOIDFieldname + " IN (" + value.idList.join() + ")"
+        },
+        "mapId": value.service.mapId,
+        "url": value.service.url
+      }
+
+      this.owfApi.sendChannelRequest("map.feature.plot.url", plotMessage);
+    });
+
+    // save the current state of the active list
+    let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
+      "active.state", this.rowDataMonitor);
+    let saveSettings = saveSettingsObservable.subscribe(model => {
+      saveSettings.unsubscribe();
+    });
+  }
 }

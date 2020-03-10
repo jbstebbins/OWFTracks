@@ -309,7 +309,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           this.credentialsRequired = true;
           this.getLayerInfo();
         } else {
-          window.alert('Search Widget: HTTP other layer error; not trapped.');
+          window.alert('Search Widget: HTTP other layer error; not trapped.\n' +
+            this.layerBaseUrl);
         }
       });
   }

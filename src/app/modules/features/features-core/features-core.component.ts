@@ -314,7 +314,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                     layer.params = layerDefinition.params;
 
                     this.layerSelected = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layer.uuid };
-                    this.selectedLayer({ originalEvent: null, value: this.layerSelected});
+                    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
                   }
                 }
               });
@@ -366,7 +366,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { field: 'title', sortable: true, dndSource: true },
+      { headerName: 'Active List', field: 'title', sortable: true, dndSource: true },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }

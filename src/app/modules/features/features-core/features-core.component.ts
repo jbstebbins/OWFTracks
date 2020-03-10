@@ -43,6 +43,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     'font-size': '14px'
   }
 
+  divRereshCss = {
+    'z-index': 3,
+    'background-color': '#f1f1f1',
+    'border': '1px solid #d3d3d3',
+    'float': 'right',
+    'position': 'absolute',
+    'right': '80%'
+  }
+
   subscription: Subscription;
   mapFeaturePlotUrl: Subscription = null;
 
@@ -229,8 +238,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
       restoreSettings.unsubscribe();
 
-      let records = JSON.parse(model.value);
-      this.rowDataMonitor = [...records];
+      if (model.value !== undefined) {
+        let records = JSON.parse(model.value);
+        this.rowDataMonitor = [...records];
+
+        if (records.length > 0) {
+          this.loadStatus = "(no layer selected!/active list ready!)";
+        }
+      }
     });
   }
 
@@ -411,7 +426,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           "mode": "ondemand",
           "definitionExpression": value.esriOIDFieldname + " IN (" + value.idList.join() + ")"
         },
-        "mapId": value.service.mapId,
+        "mapId": 1,
         "url": value.service.url
       }
 

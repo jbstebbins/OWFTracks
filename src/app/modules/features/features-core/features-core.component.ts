@@ -304,19 +304,18 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
             // if duplicate, remove old item
             if (duplicate) {
-              console.log(layerDefinition);
-              console.log(this.layers, this.layersDefinition);
               //this.selectedLayer({ originalEvent: null, value: this.layerSelected });
               this.layersDefinition.forEach((layer) => {
                 if ((layer.overlayId === layerDefinition.overlayId) && (layer.name === layerDefinition.name)) {
                   duplicate = true;
 
                   if (layer.url !== layerDefinition.url) {
-                      layer.url = layerDefinition.url;
-                      layer.params = layerDefinition.params;
-                  }
+                    layer.url = layerDefinition.url;
+                    layer.params = layerDefinition.params;
 
-                  console.log(this.layerSelected);
+                    this.layerSelected = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layer.uuid };
+                    this.selectedLayer({ originalEvent: null, value: this.layerSelected});
+                  }
                 }
               });
             }
@@ -601,8 +600,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   publishLayersLocationFinder(layer) {
     // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
-    console.log(layer);
-
     let credentialsRequired = layer.service.tempArea.credentialsRequired;
     let baseUrl = layer.service.tempArea.baseUrl;
     let token = layer.service.tempArea.token;
@@ -659,7 +656,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         });
 
         this.worker.postMessage({
-          overlayId: "TMP-Locator", filename: "TMP-Locator", 
+          overlayId: "TMP-Locator", filename: "TMP-Locator",
           trackNameField: layer.esriTitleFieldname,
           track: record,
           color: "#2700FF", geometry: geometry

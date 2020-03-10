@@ -49,7 +49,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   filterActive: boolean = false;
 
   domLayout = "normal";
-  rowSelection = "single";
+  rowSelection = "multiple";
 
   @Input()
   parentFileName: string;
@@ -75,6 +75,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
           if (this.searchValue !== "") {
             this.filterActive = true;
+            this.gridApi.deselectAll();
+            this.gridApi.deselectAllFiltered();
           } else {
             this.filterActive = false;
           }
@@ -83,14 +85,25 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         } else if (payload.action === "CSV PLOT ON MAP") {
           let tracks = [];
           if (this.filterActive) {
-            this.gridApi.forEachNodeAfterFilter((node, index) => {
-              tracks.push(node.data);
-            });
+            let selectedRows = this.gridApi.getSelectedRows();
+            if (selectedRows.length !== 0) {
+              tracks = selectedRows;
+            } else {
+              this.gridApi.forEachNodeAfterFilter((node, index) => {
+                tracks.push(node.data);
+              });
+            }
           } else {
-            tracks = this.rowData;
+            let selectedRows = this.gridApi.getSelectedRows();
+            if (selectedRows.length !== 0) {
+              tracks = selectedRows;
+            } else {
+              tracks = this.rowData;
+            }
           }
 
           this.worker.postMessage({
+            overlayId: "CSV-Viewer",
             filename: this.parentFileName, tracks: tracks,
             color: payload.value.color, columnTracking: this.columnTracking
           });
@@ -133,6 +146,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         let kmlStyles =
           "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
 
+        plotMessage.overlayId = data.overlayId;
         plotMessage.featureId = data.filename;
         plotMessage.name = data.filename;
 
@@ -149,7 +163,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             let value = track[key];
 
             if (((typeof value === "string") && (value !== undefined) && (value !== null)) &&
-              (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?"))) {
+              (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?") ||
+              value.includes("<") || value.includes(">"))) {
               value = encodeURIComponent(value);
             }
 
@@ -301,7 +316,6 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           if ((header === this.columnTracking[1]) || (header === this.columnTracking[2])) {
             coordinates = record[header];
             count = this.jsutils.countChars(coordinates, " ");
-            console.log(coordinates, count);
 
             // dms to dd conversion when 2, DMM when 1
             if (count === 2) {
@@ -329,6 +343,25 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
   onSelectionChanged() {
     var selectedRows = this.gridApi.getSelectedRows();
-    console.log(selectedRows);
+
+    let tracks;
+    if (selectedRows.length >= 0) {
+      tracks = selectedRows;
+
+      let track = tracks[0];
+      this.worker.postMessage({
+        overlayId: "TMP-Viewer", 
+        filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"), 
+        tracks: tracks,
+        color: "#000000", columnTracking: this.columnTracking
+      });
+
+      window.setTimeout(() => {
+        this.owfApi.sendChannelRequest("map.feature.unplot", {
+          overlayId: "TMP-Viewer",
+          featureId: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_")
+        });
+      }, 5000);
+    }
   }
 }

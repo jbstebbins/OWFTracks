@@ -113,7 +113,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       const kmlFooter = "</Document></kml>";
 
       const plotMessage = {
-        "overlayId": "LYR-Viewer",
+        "overlayId": "",
         "featureId": "",
         "feature": undefined,
         "name": "",
@@ -130,6 +130,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           "      <Style id=\"lyrpolyline\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle></Style> " +
           "      <Style id=\"lyrpolygon\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle><PolyStyle><color>#a00000</color><outline>0</outline><fill>1</fill></PolyStyle></Style> ";
 
+        plotMessage.overlayId = data.overlayId;
         plotMessage.featureId = (data.filename + "_" + data.track[data.trackNameField]).replace(/ /gi, "_");
         plotMessage.name = plotMessage.featureId;
 
@@ -296,7 +297,15 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           urlRecordCountSubscription.unsubscribe();
 
           this.layerRecords = model.count;
-          this.notificationService.publisherAction({ action: 'LYR TOTAL COUNT', value: model.count });
+          this.notificationService.publisherAction({
+            action: 'LYR TOTAL COUNT',
+            value: {
+              count: model.count,
+              baseUrl: this.layerBaseUrl,
+              credentialsRequired: this.credentialsRequired,
+              token: this.layerToken
+            }
+          });
 
           this.retrieveLayerData();
         });
@@ -423,7 +432,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           catchError(this.handleError),
           tap(console.log));
     } else {
-      let urlRecorddata: Observable<any> = this.http
+      urlRecorddata = this.http
         .get<any>(url, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
@@ -480,10 +489,18 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     let geometry = this.rowGeomertyData[oid];
 
     this.worker.postMessage({
-      filename: this.parentLayer.name, trackNameField: this.layerTitleField,
+      overlayId: "TMP-Viewer", filename: this.parentLayer.name, 
+      trackNameField: this.layerTitleField,
       track: selectedRow,
       color: "#ff0000", geometry: geometry
     });
+
+    window.setTimeout(() => {
+      this.owfApi.sendChannelRequest("map.feature.unplot", {
+        overlayId: "TMP-Viewer",
+        featureId: (this.parentLayer.name + "_" + selectedRow[this.layerTitleField]).replace(/ /gi, "_")
+      });
+    }, 10000);
   }
 
   private handleError(error: HttpErrorResponse) {

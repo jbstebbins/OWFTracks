@@ -46,7 +46,7 @@ export class PreferencesService {
   }
 
   private onRetrievePreferenceSuccess(observer, prefInfo) {
-    let preference = new PreferencesModel(prefInfo.namespace, prefInfo.name, prefInfo.value);
+    let preference = new PreferencesModel(prefInfo.namespace, prefInfo.path, prefInfo.value);
 
     console.log('UserCore Service (retrievePreference) completed: ', preference);
     observer.next(preference);

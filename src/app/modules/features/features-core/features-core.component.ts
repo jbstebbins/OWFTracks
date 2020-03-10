@@ -1,11 +1,15 @@
 import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectorRef, Input, ViewChild } from '@angular/core';
-import { Observable, Observer, of, Subject, EMPTY, Subscription, interval } from 'rxjs';
-import { catchError, map, filter, startWith, switchMap, tap } from 'rxjs/operators';
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
+
+import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 import { GridOptions } from "ag-grid-community";
 import { AllCommunityModules, Module } from "@ag-grid-community/all-modules";
 
 import { AgGridAngular } from 'ag-grid-angular';
+
+import { LyrToKmlWorker } from '../web-workers/lyr-to-kml.worker';
 
 import * as _ from 'lodash';
 import { jsUtils } from '../../../library/jsUtils';
@@ -57,6 +61,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   jsutils = new jsUtils();
   owfApi = new OwfApi();
+  worker: LyrToKmlWorker;
 
   layerFields: any[] = [];
   layerFieldSelected: Track;
@@ -76,7 +81,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   public searchValue: string;
   @ViewChild('lyrStatus') lyrStatus: ElementRef;
   @ViewChild('gridRemove') gridRemove: ElementRef;
-  layerDefinition: any;
   shutdown: boolean = false;
 
   gridApi;
@@ -97,13 +101,22 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     private mapMessageService: MapMessagesService,
     private notificationService: ActionNotificationService,
     private preferencesService: PreferencesService,
+    private http: HttpClient,
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
         console.log(`${payload.action}, received by features-core.component`);
 
         if (payload.action === "LYR TOTAL COUNT") {
-          this.layerRecords = payload.value;
+          this.layerRecords = payload.value.count;
+
+          this.layersDefinition.forEach((value, item) => {
+            if (value.uuid === this.layerSelected.uuid) {
+              value.tempArea.credentialsRequired = payload.value.credentialsRequired;
+              value.tempArea.token = payload.value.token;
+              value.tempArea.baseUrl = payload.value.baseUrl;
+            }
+          });
         } else if (payload.action === "LYR PARTIAL DATA") {
           this.layerPartial = payload.value;
         } else if (payload.action === "LYR ALL DATA") {
@@ -143,6 +156,120 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   ngOnInit() {
     console.log("features-core initialized.");
 
+    // create inline worker
+    this.worker = new LyrToKmlWorker(() => {
+      // START OF WORKER THREAD CODE
+
+      const kmlHeader = "<kml xmlns=\"http://www.opengis.net/kml/2.2\"> " +
+        "<Document> " +
+        "    <name>StyleMap.kml</name> " +
+        "    <open>1</open> ";
+      const kmlFooter = "</Document></kml>";
+
+      const plotMessage = {
+        "overlayId": "",
+        "featureId": "",
+        "feature": undefined,
+        "name": "",
+        "zoom": true,
+        "params": {
+          "opacity": 0.4,
+          "showLabels": true
+        }
+      };
+
+      const formatKml = (data) => {
+        let kmlStyles =
+          "      <Style id=\"lyrpoint\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+          "      <Style id=\"lyrpolyline\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle></Style> " +
+          "      <Style id=\"lyrpolygon\"><LineStyle><color>" + data.color + "</color><width>2</width></LineStyle><PolyStyle><color>#a00000</color><outline>0</outline><fill>1</fill></PolyStyle></Style> ";
+
+        plotMessage.overlayId = data.overlayId;
+        plotMessage.featureId = (data.filename + "_" + data.track[data.trackNameField]).replace(/ /gi, "_");
+        plotMessage.name = plotMessage.featureId;
+
+        // format and return to main thread
+        let kmlPayload = "";
+        kmlPayload += "<Placemark> " +
+          "<name>" + data.track[data.trackNameField] + "</name> ";
+
+        // format geometry correctly based on type Point=(x,y); Polylines=(paths:[[[],[],[],[]],...]), Polygons=(rings:[[[],[],[],[]],[[],[],[],[]],...])
+        // https://developers.arcgis.com/documentation/core-concepts/features-and-geometries/
+        if (data.geometry.hasOwnProperty("x") && data.geometry.hasOwnProperty("y")) {
+          kmlPayload += "<styleUrl>#lyrpoint</styleUrl> <Point><coordinates>" + data.geometry.x + "," + data.geometry.y + ",0" + "</coordinates></Point> ";
+        } else if (data.geometry.hasOwnProperty("paths")) {
+          kmlPayload += "<styleUrl>#lyrpolyline</styleUrl> ";
+          data.geometry.paths.forEach((pathsArray) => {
+            kmlPayload += "<LineString><tessellate>1</tessellate><coordinates>";
+            pathsArray.forEach((pathArray) => {
+              kmlPayload += pathArray[0] + "," + pathArray[1] + ",0 ";
+            });
+            kmlPayload += "</coordinates></LineString> ";
+          });
+        } else if (data.geometry.hasOwnProperty("rings")) {
+          kmlPayload += "<styleUrl>#lyrpolygon</styleUrl> ";
+
+          let ringsArray = data.geometry.rings;
+          let ringArray = [];
+          kmlPayload += "<Polygon>";
+          for (let i = 0; i < ringsArray.length; i++) {
+            if (i === 0) {
+              kmlPayload += "<outerBoundaryIs><LinearRing><coordinates>";
+              ringArray = ringsArray[i];
+              ringArray.forEach((point) => {
+                kmlPayload += point[0] + "," + point[1] + ",0 ";
+              });
+              kmlPayload += "</coordinates></LinearRing></outerBoundaryIs>";
+            } else {
+              kmlPayload += "<innerBoundaryIs><LinearRing><coordinates>";
+              ringArray = ringsArray[i];
+              ringArray.forEach((point) => {
+                kmlPayload += point[0] + "," + point[1] + ",0 ";
+              });
+              kmlPayload += "</coordinates></LinearRing></innerBoundaryIs>";
+            }
+          }
+          kmlPayload += "</Polygon> ";
+        }
+
+        kmlPayload += "<ExtendedData>";
+        Object.keys(data.track).forEach((key, index) => {
+          let value = data.track[key];
+          if (((typeof value === "string") && (value !== undefined) && (value !== null)) &&
+            (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?"))) {
+            value = encodeURIComponent(value);
+          }
+          kmlPayload += "<Data name=\"" + key + "\"><value>" + value + "</value></Data>";
+        });
+        kmlPayload += "</ExtendedData></Placemark>";
+
+        plotMessage.feature = kmlHeader + kmlStyles + kmlPayload + kmlFooter;
+
+        // this is from DedicatedWorkerGlobalScope ( because of that we have postMessage and onmessage methods )
+        // and it can't see methods of this class
+        // @ts-ignore
+        postMessage({
+          status: "kml formatting complete", kml: plotMessage
+        });
+
+        plotMessage.feature = "";
+      };
+
+      // @ts-ignore
+      onmessage = (evt) => {
+        formatKml(evt.data);
+      };
+      // END OF WORKER THREAD CODE
+    });
+
+    this.worker.onmessage().subscribe((event) => {
+      this.owfApi.sendChannelRequest("map.feature.plot", event.data.kml);
+    });
+
+    this.worker.onerror().subscribe((data) => {
+      console.log(data);
+    });
+
     // recall memory if present and activate
     if (this.configService.getMemoryValue("layers") !== undefined) {
       this.layers = this.configService.getMemoryValue("layers");
@@ -161,21 +288,43 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         if (message.format === "arcgis-feature") {
           let layerDefinition = message;
           layerDefinition["uuid"] = this.jsutils.uuidv4();
+          layerDefinition.tempArea = {};
 
           // skip self-adding of layers
-          if (layerDefinition.overlayId !== "LYR-Monitor") {
+          if ((layerDefinition.overlayId !== "LYR-Monitor") &&
+            (layerDefinition.overlayId !== "TMP-Monitor")) {
             // check for duplication
             let duplicate = false;
             this.layers.forEach((value, index) => {
               if (value.title === (layerDefinition.name + "/" + layerDefinition.overlayId)) {
                 duplicate = true;
-                console.log("duplicate layer - " + value.title + "/layer not added.");
+                console.log("duplicate layer - " + value.title + "/prior layer replaced.");
               }
             });
 
-            let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
+            // if duplicate, remove old item
+            if (duplicate) {
+              console.log(layerDefinition);
+              console.log(this.layers, this.layersDefinition);
+              //this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+              this.layersDefinition.forEach((layer) => {
+                if ((layer.overlayId === layerDefinition.overlayId) && (layer.name === layerDefinition.name)) {
+                  duplicate = true;
+
+                  if (layer.url !== layerDefinition.url) {
+                      layer.url = layerDefinition.url;
+                      layer.params = layerDefinition.params;
+                  }
+
+                  console.log(this.layerSelected);
+                }
+              });
+            }
 
             if (!duplicate) {
+              // add the new item
+              let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
+
               // trigger angular binding
               this.layers = [...this.layers, newItem];
               this.layersDefinition = [...this.layersDefinition, layerDefinition];
@@ -208,6 +357,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     // prevent memory leak when component destroyed
     if (this.mapFeaturePlotUrl) {
       this.mapFeaturePlotUrl.unsubscribe();
+    }
+
+    if (this.worker) {
+      this.worker.terminate();
     }
   }
 
@@ -258,6 +411,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   onSelectionChanged() {
     var selectedRows = this.gridApi.getSelectedRows();
+
+    if (selectedRows.length > 0) {
+      this.publishLayersLocationFinder(selectedRows[0]);
+    }
   }
 
   searchListener($event: any): void {
@@ -316,6 +473,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       name: this.layerSelected.title,
       esriOIDFieldname: this.layerFieldsId,
       esriOIDValue: data[this.layerFieldsId],
+      esriTitleFieldname: this.layerFieldsTitle,
       service: ""
     };
 
@@ -366,7 +524,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
 
     // find the record to remove
-    let deleteId;
+    let deleteId = -1;
     this.rowDataMonitor.forEach((row, index) => {
       if (row.id === data.id) {
         deleteId = index;
@@ -374,7 +532,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     });
 
     // delete the record
-    if (deleteId) {
+    if (deleteId !== -1) {
       this.rowDataMonitor.splice(deleteId, 1);
 
       let records = [...this.rowDataMonitor];
@@ -440,4 +598,96 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       saveSettings.unsubscribe();
     });
   }
+
+  publishLayersLocationFinder(layer) {
+    // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
+    console.log(layer);
+
+    let credentialsRequired = layer.service.tempArea.credentialsRequired;
+    let baseUrl = layer.service.tempArea.baseUrl;
+    let token = layer.service.tempArea.token;
+
+    // retrieve the record count
+    let url = baseUrl + "/query?" + "f=json" +
+      "&returnGeometry=true" +
+      "&returnQueryGeometry=true" +
+      "&returnExceededLimitFeatures=true" +
+      "&outFields=*" +
+      //"&orderByFields=" + this.layerIDField +
+      //"&resultOffset=" + this.layerOffset +
+      //"&resultRecordCount=" + this.layerMaxRecords +
+      "&outSR=4326" +
+      "&spatialRel=esriSpatialRelIntersects";
+
+    // add field filters if required
+    url += "&where=" + layer.esriOIDFieldname + "%20IN%20(" + layer.esriOIDValue + ")";
+
+    url += token;
+    let urlRecorddata: Observable<any>;
+
+    if (!credentialsRequired) {
+      urlRecorddata = this.http
+        .get<any>(url, { responseType: 'json' })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    } else {
+      urlRecorddata = this.http
+        .get<any>(url, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+    }
+
+    let urlRecordSubscription = urlRecorddata.subscribe(model => {
+      urlRecordSubscription.unsubscribe();
+
+      // send notification to parent that partial result was returned
+      if (model.features) {
+        let recordCount = model.features.length;
+        let record = {};
+        let geometry = {};
+
+        model.features.forEach((row) => {
+          Object.keys(row.attributes).forEach((column, index) => {
+            record[column] = row.attributes[column];
+          });
+
+          geometry = row.geometry;
+        });
+
+        this.worker.postMessage({
+          overlayId: "TMP-Locator", filename: "TMP-Locator", 
+          trackNameField: layer.esriTitleFieldname,
+          track: record,
+          color: "#2700FF", geometry: geometry
+        });
+
+        window.setTimeout(() => {
+          this.owfApi.sendChannelRequest("map.feature.unplot", {
+            overlayId: "TMP-Locator",
+            featureId: ("TMP-Locator" + "_" + record[layer.esriTitleFieldname]).replace(/ /gi, "_")
+          });
+        }, 5000);
+      } else {
+        alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
+      }
+    });
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    if (error.error instanceof ErrorEvent) {
+      // client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+
+    return throwError(errorMessage);
+  }
+
 }

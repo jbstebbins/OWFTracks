@@ -366,7 +366,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { headerName: 'Active List', field: 'title', sortable: true, dndSource: true },
+      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }

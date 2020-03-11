@@ -557,6 +557,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let services = {};
     let service;
 
+    // remove existing overlay 
+    this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
+
     this.rowDataMonitor.forEach((row, index) => {
       if (services[row.service.uuid] === undefined) {
         service = {
@@ -609,7 +612,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       } else {
         let queueItem = plotMessageQueue.splice(0, 1);
         if (queueItem.length > 0) {
-          console.log("send request for watch list - " + queueItem[0].message);
           this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
         }
       }

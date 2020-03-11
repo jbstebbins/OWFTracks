@@ -45,6 +45,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   getRowNodeId;
   gridOptions: GridOptions;
   columnDefinitions: any = [];
+  columnList: any = {};
   paginationPageSize: 25;
   agmodules: Module[] = AllCommunityModules;
   loadGrid: boolean = false;
@@ -326,11 +327,14 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
   private createColumnDefs() {
     this.columnDefinitions = [];
+    this.columnList = {};
 
     let fieldList = "";
     let itemNameTemp = "";
     let newItem;
     this.layerFields.forEach((item) => {
+      this.columnList[item.name] = item;
+
       itemNameTemp = item.name.toLowerCase();
       if (itemNameTemp.includes("name") || itemNameTemp.includes("title")) {
         this.layerTitleField = item.name;
@@ -339,8 +343,25 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       if (item.type === "esriFieldTypeOID") {
         this.layerIDField = item.name;
       }
+      /* http://resources.esri.com/help/9.3/arcgisserver/adf/java/help/api/arcgiswebservices/com/esri/arcgisws/EsriFieldType.html
+      <enumeration value="esriFieldTypeInteger"/>
+      <enumeration value="esriFieldTypeSmallInteger"/>
+      <enumeration value="esriFieldTypeDouble"/>
+      <enumeration value="esriFieldTypeSingle"/>
+      <enumeration value="esriFieldTypeString"/>
+      <enumeration value="esriFieldTypeDate"/>
+      <enumeration value="esriFieldTypeGeometry"/>
+      <enumeration value="esriFieldTypeOID"/>
+      <enumeration value="esriFieldTypeBlob"/>
+      <enumeration value="esriFieldTypeGlobalID"/>
+      <enumeration value="esriFieldTypeRaster"/>
+      <enumeration value="esriFieldTypeGUID"/>
+      <enumeration value="esriFieldTypeXML"/>
 
-      if (item.type !== "esriFieldTypeGeometry") {
+      public DateTime FromUnixTime(long unixTime) {     var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);     return epoch.AddSeconds(unixTime); }  
+      */
+      if ((item.type !== "esriFieldTypeGeometry") && (item.type !== "esriFieldTypeBlob") &&
+        (item.type !== "esriFieldTypeRaster") && (item.type !== "esriFieldTypeXML")) {
         fieldList += item.name + ",";
 
         newItem = {
@@ -424,6 +445,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     url += this.layerToken;
     let urlRecorddata: Observable<any>;
 
+    console.log(url);
     if (!this.credentialsRequired) {
       urlRecorddata = this.http
         .get<any>(url, { responseType: 'json' })
@@ -489,7 +511,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     let geometry = this.rowGeomertyData[oid];
 
     this.worker.postMessage({
-      overlayId: "TMP-Viewer", filename: this.parentLayer.name, 
+      overlayId: "TMP-Viewer", filename: this.parentLayer.name,
       trackNameField: this.layerTitleField,
       track: selectedRow,
       color: "#ff0000", geometry: geometry

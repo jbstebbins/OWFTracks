@@ -602,7 +602,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         "url": value.service.url
       }
 
-      plotMessageQueue.push({channel: "map.feature.plot.url", message: plotMessage});
+      plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
     });
 
     // process the queue on timer
@@ -707,7 +707,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   searchRefresh($event) {
     this.searchText = "";
-    this.searchListener({"key": "Enter"});
+    this.searchListener({ "key": "Enter", "target": { "value": undefined } });
   }
 
   private handleError(error: HttpErrorResponse) {

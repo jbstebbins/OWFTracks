@@ -5,6 +5,10 @@
       <div *ngIf="loadComponent" style="height: 22px;">Layer:
         <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
           (onChange)="selectedLayer($event)"></p-dropdown>
+        <div #layerRefresh id="layerRefresh" [ngStyle]="divLayerRefreshCss" (click)="refreshLayer($event)">
+          <img src="/OWFTracks/assets/images/refresh.png" title="Refresh layer..."
+            style="width:22px;height:22px;margin-left: -1px;margin-top: -1px;">
+        </div>
       </div>
     </div>
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
@@ -16,7 +20,11 @@
       <div *ngIf="loadComponent">Search: <p-dropdown #lyrOptions id="lyrFields" [options]="layerFields"
           [(ngModel)]="layerFieldSelected" optionLabel="title"></p-dropdown>
         <input type="text" #lyrSearch name="Search LYR" id="lyrSearch" (keydown)="searchListener($event)"
-          title="Enter Search Text..." style="color: black;width: 150px;" />
+          [value]="searchText" title="Enter Search Text..." style="color: black;width: 150px;" />
+        <div #layerRefresh id="searchRefresh" [ngStyle]="divLayerRefreshCss" (click)="searchRefresh($event)">
+          <img src="/OWFTracks/assets/images/refresh.png" title="Clear layer..."
+            style="width:22px;height:22px;margin-left: -1px;margin-top: -1px;">
+        </div>
       </div>
     </div>
   </div>
@@ -28,7 +36,7 @@
   </div>
 </div>
 <div class="row" style="margin: unset;">
-  <div #gridRefresh id="gridRefresh" [ngStyle]="divRereshCss" (click)="publishLayers($event)">
+  <div #gridRefresh id="gridRefresh" [ngStyle]="divRefreshCss" (click)="publishLayers($event)">
     <img src="/OWFTracks/assets/images/layer-show.png" title="Resync with map...">
   </div>
   <div class="span3" style="background-color:#d0d9e7;height:calc(100vh - 115px);width: 20%;" id="leftmargin"

@@ -73,10 +73,11 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           this.searchValue = payload.value;
           //this.gridApi.onFilterChanged();
 
+          this.gridApi.deselectAll();
+          this.gridApi.deselectAllFiltered();
+
           if (this.searchValue !== "") {
             this.filterActive = true;
-            this.gridApi.deselectAll();
-            this.gridApi.deselectAllFiltered();
           } else {
             this.filterActive = false;
           }
@@ -139,7 +140,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         "featureId": "",
         "feature": undefined,
         "name": "",
-        "zoom": false
+        "zoom": true
       };
 
       const formatKml = (data) => {
@@ -314,7 +315,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
           // convert lat/lon if needed
           if ((header === this.columnTracking[1]) || (header === this.columnTracking[2])) {
-            coordinates = record[header];
+            coordinates = record[header] + "";
             count = this.jsutils.countChars(coordinates, " ");
 
             // dms to dd conversion when 2, DMM when 1
@@ -345,7 +346,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     var selectedRows = this.gridApi.getSelectedRows();
 
     let tracks;
-    if (selectedRows.length >= 0) {
+    if (selectedRows.length > 0) {
       tracks = selectedRows;
 
       let track = tracks[0];

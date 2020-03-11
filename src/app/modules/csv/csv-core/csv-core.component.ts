@@ -15,6 +15,15 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   subscription: Subscription;
 
+  divCSVRefreshCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '22px',
+    'display': 'inline'
+  }
+
+  searchText = "";
+
   public filename: string = "";
   public color: any = "#f38c06";
   public records: any[] = [];
@@ -152,5 +161,10 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     this.loadStatus = "(no file selected!)";
+  }
+
+  refreshCSV($event) {
+    this.searchText = "";
+    this.notificationService.publisherAction({ action: 'CSV SEARCH VALUE', value: "" });
   }
 }

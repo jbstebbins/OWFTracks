@@ -47,7 +47,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     'font-size': '14px'
   }
 
-  divRereshCss = {
+  divRefreshCss = {
     'z-index': 3,
     'background-color': '#f1f1f1',
     'border': '1px solid #d3d3d3',
@@ -55,6 +55,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     'position': 'absolute',
     'right': '80%'
   }
+
+  divLayerRefreshCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '22px',
+    'display': 'inline'
+  }
+
+  searchText = "";
 
   subscription: Subscription;
   mapFeaturePlotUrl: Subscription = null;
@@ -291,8 +300,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           layerDefinition.tempArea = {};
 
           // skip self-adding of layers
-          if ((layerDefinition.overlayId !== "LYR-Monitor") &&
-            (layerDefinition.overlayId !== "TMP-Monitor")) {
+          if ((layerDefinition.overlayId !== "LYR-WatchList") &&
+            (layerDefinition.overlayId !== "TMP-WatchList") &&
+            (layerDefinition.overlayId !== "TMP-Viewer") &&
+            (layerDefinition.overlayId !== "TMP-Locator")) {
             // check for duplication
             let duplicate = false;
             this.layers.forEach((value, index) => {
@@ -560,14 +571,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       }
     });
 
+    let plotMessageQueue = [];
     let plotMessage = {};
     let value;
     Object.keys(services).forEach((layer) => {
       value = services[layer];
 
       plotMessage = {
-        "overlayId": "LYR-Monitor",
-        "featureId": "LYR-Monitor_" + value.service.featureId,
+        "overlayId": "LYR-WatchList",
+        "featureId": "LYR-WatchList_" + value.service.featureId,
         "name": value.service.name,
         "format": "arcgis-feature",
         "params": {
@@ -587,8 +599,21 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         "url": value.service.url
       }
 
-      this.owfApi.sendChannelRequest("map.feature.plot.url", plotMessage);
+      plotMessageQueue.push({channel: "map.feature.plot.url", message: plotMessage});
     });
+
+    // process the queue on timer
+    let queueInterval = setInterval(() => {
+      if (plotMessageQueue.length === 0) {
+        clearInterval(queueInterval);
+      } else {
+        let queueItem = plotMessageQueue.splice(0, 1);
+        if (queueItem.length > 0) {
+          console.log("send request for watch list - " + queueItem[0].message);
+          this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
+        }
+      }
+    }, 2000);
 
     // save the current state of the active list
     let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
@@ -672,6 +697,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
       }
     });
+  }
+
+  refreshLayer($event) {
+    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+  }
+
+  searchRefresh($event) {
+    this.searchText = "";
+    this.searchListener({"key": "Enter"});
   }
 
   private handleError(error: HttpErrorResponse) {

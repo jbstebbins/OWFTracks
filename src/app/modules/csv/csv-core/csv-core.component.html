@@ -1,8 +1,13 @@
-<div class="container" style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;font-size: 12px;">
+<div class="container"
+  style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;font-size: 12px;">
   <div class="row" style="height: 35px;">
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent && isDataValid">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch"
-          (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
+          [value]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
+        <div #layerRefresh id="layerRefresh" [ngStyle]="divCSVRefreshCss" (click)="refreshCSV($event)">
+          <img src="/OWFTracks/assets/images/refresh.png" title="Clear filters..."
+            style="width:22px;height:22px;margin-left: -1px;margin-top: -1px;">
+        </div>
         <span style="float: right;height: 22px;display: flex;">
           <p-colorPicker [(ngModel)]="color" [ngStyle]="{'height':'22px'}"></p-colorPicker>
           <button pButton type="button" icon="pi pi-check" iconPos="left" styleClass="ui-button-info"
@@ -14,10 +19,11 @@
       <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
     </div>
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
-      <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (click)="fileSelectListener($event)" (change)="uploadListener($event)"
-        accept=".csv, .xls, .xslx" />
+      <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (click)="fileSelectListener($event)"
+        (change)="uploadListener($event)" accept=".csv, .xls, .xslx" />
     </div>
   </div>
 </div>
-<app-csv-grid *ngIf="loadComponent" [parentFileName]="filename" [parentData]="records" [parentMessage]="searchValue" [parentColor]="color">
+<app-csv-grid *ngIf="loadComponent" [parentFileName]="filename" [parentData]="records" [parentMessage]="searchValue"
+  [parentColor]="color">
 </app-csv-grid>

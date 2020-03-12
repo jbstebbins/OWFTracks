@@ -342,7 +342,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     return "[" + params.value.toLocaleString() + "]";
   }
 
-  onRowClicked() {
+  onSelectionChanged() {
     var selectedRows = this.gridApi.getSelectedRows();
 
     let tracks;

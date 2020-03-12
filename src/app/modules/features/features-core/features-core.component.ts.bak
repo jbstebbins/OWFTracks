@@ -118,7 +118,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
         if (payload.action === "LYR TOTAL COUNT") {
           this.layerRecords = payload.value.count;
-          this.layerPartial = 0;
 
           this.layersDefinition.forEach((value, item) => {
             if (value.uuid === this.layerSelected.uuid) {
@@ -420,7 +419,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     return "[" + params.value.toLocaleString() + "]";
   }
 
-  onRowClicked() {
+  onSelectionChanged() {
     var selectedRows = this.gridApi.getSelectedRows();
 
     if (selectedRows.length > 0) {

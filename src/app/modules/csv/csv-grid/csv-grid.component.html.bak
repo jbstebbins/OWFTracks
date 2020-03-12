@@ -1,10 +1,10 @@
-<div style="width: 100%; height: calc(100vh - 115px);">
-  <ag-grid-angular *ngIf="loadGrid" #agGridLYR class="ag-theme-balham" [rowData]="rowData" [modules]="agmodules"
+<div style="width: 100%; height: calc(100vh - 85px);">
+  <ag-grid-angular #agGridCSV class="ag-theme-balham" [rowData]="rowData" [modules]="agmodules"
       [columnDefs]="columnDefinitions" [domLayout]="domLayout"
       [pagination]="true" [paginationNumberFormatter]="paginationNumberFormatter"
       [paginationPageSize]="paginationPageSize" [suppressScrollOnNewData]="true"
       (gridReady)="onGridReady($event)" (firstDataRendered)="onFirstDataRendered($event)"
-      [rowSelection]="rowSelection" (rowClicked)="onRowClicked($event)"
+      [rowSelection]="rowSelection" (selectionChanged)="onSelectionChanged($event)"
       style="width: 100%; height: 100%">
   </ag-grid-angular>
 </div>

@@ -504,20 +504,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
           this.columnDefinitions.forEach((column, index) => {
             record[column.field] = row.attributes[column.field];
-
-            if (this.columnList[column.field].type === "esriFieldTypeDate") {
-              if ((record[column.field] !== undefined) && (record[column.field] !== null) &&
-                (record[column.field] !== "")) {
-                try {
-                  let lvar = "" + record[column.field] + "";
-                  let ldate = new Date(record[column.field]).toLocaleString();
-                  record[column.field] = ldate;
-                }
-                catch (error) {
-                  console.log('.. error converting date parsing layer/', error);
-                }
-              }
-            }
           });
 
           this.rowGeomertyData[row.attributes[this.layerIDField]] = row.geometry;

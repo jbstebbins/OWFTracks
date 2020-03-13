@@ -48,14 +48,14 @@ export class PreferencesService {
   private onRetrievePreferenceSuccess(observer, prefInfo) {
     let preference = new PreferencesModel(prefInfo.namespace, prefInfo.path, prefInfo.value);
 
-    console.log('UserCore Service (retrievePreference) completed: ', preference);
+    //console.log('UserCore Service (retrievePreference) completed: ', preference);
     observer.next(preference);
   }
 
   private onRetrievePreferenceFailure(observer, error, status) {
     let preference: PreferencesModel = null;
 
-    console.log('UserCore Service (retrievePreference) error: ', error, status);
+    //console.log('UserCore Service (retrievePreference) error: ', error, status);
     observer.next(preference);
   }
 
@@ -80,14 +80,14 @@ export class PreferencesService {
   private storePreferenceSuccess(observer, prefValue) {
     let statusx = new StatusModel("200", "");
 
-    console.log('UserCore Service (storePreferenceSuccess) completed: ', prefValue);
+    //console.log('UserCore Service (storePreferenceSuccess) completed: ', prefValue);
     observer.next(statusx);
   }
 
   private storePreferenceError(observer, error, status) {
     let statusx = new StatusModel(error, status);
 
-    console.log('UserCore Service (storePreferenceError) error: ', error, status);
+    //console.log('UserCore Service (storePreferenceError) error: ', error, status);
     observer.next(statusx);
   }
 }

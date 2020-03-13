@@ -1,6 +1,6 @@
 {
-	"version": "1.1.b12",
-	"buildDate": "2020/03/11",
+	"version": "1.1.b15",
+	"buildDate": "2020/03/12",
 	"urls": {
 		"RefreshRate": "5000",
 		"TrackCount": "2000",

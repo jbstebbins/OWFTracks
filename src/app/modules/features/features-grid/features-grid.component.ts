@@ -68,20 +68,25 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   @Input()
   parentLayer: any = {};
 
+  @Input()
+  parentMapView: any;
+
   constructor(private configService: ConfigService,
     private notificationService: ActionNotificationService,
     private http: HttpClient) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
-        console.log(`${payload.action}, received by features-grid.component`);
+        //console.log(`${payload.action}, received by features-grid.component`);
         if (payload.action === "LYR SEARCH VALUE") {
           this.retrieveLayerData(payload.value.field, payload.value.value);
+        } else if (payload.action === "LYR MAP REFRESHED") {
+          this.parentMapView = payload.value;
         }
       });
   }
 
   ngOnInit() {
-    console.log("features-grid initialized.");
+    //console.log("features-grid initialized.");
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.parentLayer.url.split("?");
@@ -120,9 +125,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         "name": "",
         "zoom": true,
         "params": {
-          "opacity": 0.4,
+          "opacity": 1.0,
           "showLabels": true
-        }
+        },
+        "mapId": 1
       };
 
       const formatKml = (data) => {
@@ -219,7 +225,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log("features-grid destroyed.");
+    //console.log("features-grid destroyed.");
 
     // prevent memory leak when component destroyed
     this.subscription.unsubscribe();
@@ -314,7 +320,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       error => console.log('HTTP Error', error),
       () => {
         if (!this.connectionFailure) {
-          console.log('HTTP request completed.');
+          //console.log('HTTP request completed.');
         } else if (!this.credentialsRequired) {
           this.credentialsRequired = true;
           this.getLayerInfo();
@@ -398,11 +404,11 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
   sendNotification(payload) {
     this.notificationService.subscriberAction(payload);
-    console.log(`${payload.action}, pressed from features-grid.component`);
+    //console.log(`${payload.action}, pressed from features-grid.component`);
   }
 
   onGridReady(params) {
-    console.log("features-grid ready.");
+    //console.log("features-grid ready.");
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
 
@@ -434,12 +440,19 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       //"&orderByFields=" + this.layerIDField +
       //"&resultOffset=" + this.layerOffset +
       //"&resultRecordCount=" + this.layerMaxRecords +
-      "&outSR=4326" +
-      "&spatialRel=esriSpatialRelIntersects";
+      "&outSR=4326";
+
+    // bound to map extent
+    if ((this.parentMapView !== undefined) && (this.parentMapView !== null)) {
+      url += "&inSR=4326" +
+        "&geometryType=esriGeometryEnvelope" +
+        "&spatialRel=esriSpatialRelContains" +
+        "&geometry=" + this.parentMapView.bounds.southWest.lon + "%2C" + this.parentMapView.bounds.southWest.lat + "%2C" +
+          this.parentMapView.bounds.northEast.lon + "%2C" + this.parentMapView.bounds.northEast.lat;
+    }
 
     // add field filters if required
     if ((field !== undefined) && (value !== undefined)) {
-      console.log(this.columnList[field], value);
       if (this.columnList[field].type !== "esriFieldTypeString") {
         if (value.charAt(0) === "=") {
           url += "&where=" + field + "+%3D+" + encodeURIComponent("'" + value.slice(1) + "'");
@@ -465,7 +478,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     url += this.layerToken;
     let urlRecorddata: Observable<any>;
 
-    console.log(url);
     if (!this.credentialsRequired) {
       urlRecorddata = this.http
         .get<any>(url, { responseType: 'json' })

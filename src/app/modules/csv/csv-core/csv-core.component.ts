@@ -41,7 +41,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
-        console.log(`${payload.action}, received by csv-core.component`);
+        //console.log(`${payload.action}, received by csv-core.component`);
 
         if (payload.action === "CSV INVALID DATA") {
           this.isDataValid = !payload.value;
@@ -50,11 +50,11 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log("csv-core initialized.");
+    //console.log("csv-core initialized.");
   }
 
   ngOnDestroy() {
-    console.log("csv-core destroyed.");
+    //console.log("csv-core destroyed.");
 
     // prevent memory leak when component destroyed
     this.subscription.unsubscribe();
@@ -62,7 +62,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   sendNotification(payload) {
     this.notificationService.subscriberAction(payload);
-    console.log(`${payload.action}, pressed from csv-core.component`);
+    //console.log(`${payload.action}, pressed from csv-core.component`);
   }
 
   fileSelectListener($event: any): void {

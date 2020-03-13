@@ -19,7 +19,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   constructor(private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
-        console.log(`${payload.action}, received by MenuComponent`);
+        //console.log(`${payload.action}, received by MenuComponent`);
       }
     );
   }
@@ -44,7 +44,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   notifyMenu(event) {
     this.notificationService.subscriberAction({action:event.item.label});
     this.searchText = event.item.label;
-    console.log(`${event.item.label}, pressed from MenuComponent`);
+    //console.log(`${event.item.label}, pressed from MenuComponent`);
   }
 
   onSearchEnter(value: string) {
@@ -54,7 +54,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.searchText = value;
     }
 
-    console.log(`search value: ${value}`);
+    //console.log(`search value: ${value}`);
     this.notificationService.subscriberAction({action:"search", data:value});
   }
 

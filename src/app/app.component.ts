@@ -20,7 +20,7 @@ export class AppComponent implements OnInit, OnDestroy {
 		private configService: ConfigService) {
 		this.notificationService.subscriber$.subscribe(
 			payload => {
-				console.log(`${payload.action}, received by AppComponent`);
+				//console.log(`${payload.action}, received by AppComponent`);
 
 				// check the menu item pressed and take action
 				if (payload.action === "Connect CSV") {
@@ -79,6 +79,6 @@ export class AppComponent implements OnInit, OnDestroy {
   
 	notifyMenu() {
 		this.notificationService.publisherAction({action:'New File'});
-		console.log('New File, pressed from AppComponent');
+		//console.log('New File, pressed from AppComponent');
 	}
 }

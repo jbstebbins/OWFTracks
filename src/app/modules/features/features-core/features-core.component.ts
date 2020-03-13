@@ -67,10 +67,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   subscription: Subscription;
   mapFeaturePlotUrl: Subscription = null;
+  mapStatusView: Subscription = null;
 
   jsutils = new jsUtils();
   owfApi = new OwfApi();
   worker: LyrToKmlWorker;
+
+  mapView: any;
+  extent: any;
 
   layerFields: any[] = [];
   layerFieldSelected: Track;
@@ -114,7 +118,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
-        console.log(`${payload.action}, received by features-core.component`);
+        //console.log(`${payload.action}, received by features-core.component`);
 
         if (payload.action === "LYR TOTAL COUNT") {
           this.layerRecords = payload.value.count;
@@ -164,7 +168,21 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log("features-core initialized.");
+    //console.log("features-core initialized.");
+
+    this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(
+      mapView => {
+        this.mapView = mapView;
+
+        // do intial get on tracks on view change
+        this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
+          mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
+
+        this.notificationService.publisherAction({
+          action: 'LYR MAP REFRESHED',
+          value: { field: 'mapExtent', value: this.mapView }
+        });
+      });
 
     // create inline worker
     this.worker = new LyrToKmlWorker(() => {
@@ -183,7 +201,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         "name": "",
         "zoom": true,
         "params": {
-          "opacity": 0.4,
+          "opacity": 1.0,
           "showLabels": true
         }
       };
@@ -359,7 +377,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log("features-core destroyed.");
+    //console.log("features-core destroyed.");
     this.shutdown = true;
 
     // prevent memory leak when component destroyed
@@ -370,6 +388,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       this.mapFeaturePlotUrl.unsubscribe();
     }
 
+    if (this.mapStatusView) {
+      this.mapStatusView.unsubscribe();
+    }
+
     if (this.worker) {
       this.worker.terminate();
     }
@@ -378,7 +400,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true },
+      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true, width: "350px" },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }
@@ -388,7 +410,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   onGridReady(params) {
-    console.log("features-core ready.");
+    //console.log("features-core ready.");
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
 
@@ -592,7 +614,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           "refreshInterval": "0.10",
           "zoom": "false",
           "showLabels": "false",
-          "opacity": 0.5,
+          "opacity": 1.0,
           "transparent": "true",
           "useProxy": "false",
           "layers": "5",

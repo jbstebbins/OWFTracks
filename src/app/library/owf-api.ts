@@ -22,19 +22,21 @@ export class OwfApi {
 				}
 			}
 		});
+		
 		this._WidgetStateController.addStateEventOverrides({
 			events: ['beforeclose']
 		});
 	}
 
 	private shutdownWidget(sender: String, msg): void {
-		let self = this;
+		var self = this;
 
 		// remove listener override to prevent looping
 		this._WidgetStateController.removeStateEventOverrides({
 			events: ['beforeclose'],
 			callback: function () {
-				console.log('.. widget shutdown!!');
+				//console.log('.. widget shutdown!!');
+
 				// unpublish active track layers
 
 				// unsubcribe the events
@@ -57,6 +59,6 @@ export class OwfApi {
 	}
 
 	public requestMapViewStatus(): void {
-		this.sendChannelRequest("map.status.request", {types: ["view"]});
+		this.sendChannelRequest("map.status.request", { types: ["view"] });
 	}
 }

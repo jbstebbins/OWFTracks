@@ -67,7 +67,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
-        console.log(`${payload.action}, received by csv-grid.component`);
+        //console.log(`${payload.action}, received by csv-grid.component`);
 
         if (payload.action === "CSV SEARCH VALUE") {
           this.searchValue = payload.value;
@@ -113,7 +113,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log("csv-grid created.");
+    //console.log("csv-grid created.");
     this.config = this.configService.getConfig();
 
     this.gridOptions = <GridOptions>{
@@ -140,7 +140,13 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         "featureId": "",
         "feature": undefined,
         "name": "",
-        "zoom": true
+        "zoom": true,
+        "params": {
+          "zoom": true,
+          "showLabels": "true",
+          "opacity": 0.55
+        },
+        "mapId": 1
       };
 
       const formatKml = (data) => {
@@ -165,7 +171,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
             if (((typeof value === "string") && (value !== undefined) && (value !== null)) &&
               (value.includes(":") || value.includes("/") || value.includes("&") || value.includes("=") || value.includes("?") ||
-              value.includes("<") || value.includes(">"))) {
+                value.includes("<") || value.includes(">"))) {
               value = encodeURIComponent(value);
             }
 
@@ -203,7 +209,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    console.log("csv-grid destroyed.");
+    //console.log("csv-grid destroyed.");
 
     // prevent memory leak when component destroyed
     this.subscription.unsubscribe();
@@ -215,7 +221,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
   sendNotification(payload) {
     this.notificationService.subscriberAction(payload);
-    console.log(`${payload.action}, pressed from csv-grid.component`);
+    //console.log(`${payload.action}, pressed from csv-grid.component`);
   }
 
   private createColumnDefs() {
@@ -351,8 +357,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
       let track = tracks[0];
       this.worker.postMessage({
-        overlayId: "TMP-Viewer", 
-        filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"), 
+        overlayId: "TMP-Viewer",
+        filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"),
         tracks: tracks,
         color: "#000000", columnTracking: this.columnTracking
       });

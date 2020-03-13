@@ -35,10 +35,10 @@ export class CotMinotaurService {
   ) {
     this.config = this.configService.getConfig();
 
-    this.trackRefreshRate = this.config.urls["RefreshRate"];
+    this.trackRefreshRate = this.config.Urls["RefreshRate"];
 
-    let trackLevel:string = this.config.urls["CotServiceActive"];
-    this.trackUrl = this.config.urls[trackLevel];
+    let trackLevel:string = this.config.Urls["CotServiceActive"];
+    this.trackUrl = this.config.Urls[trackLevel];
   }
 
   getCotTracks(limit, extent): Observable<any> {

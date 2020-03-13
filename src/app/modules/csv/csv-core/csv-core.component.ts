@@ -1,6 +1,8 @@
 import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
+import { ConfigModel } from '../../../models/config-model';
+import { ConfigService } from '../../../services/config.service';
 import { ActionNotificationService } from '../../../services/action-notification.service';
 
 import * as xls from 'xlsx';
@@ -12,7 +14,7 @@ import * as papa from 'papaparse';
   styleUrls: ['./csv-core.component.css']
 })
 export class CsvCoreComponent implements OnInit, OnDestroy {
-
+  config: ConfigModel = null;
   subscription: Subscription;
 
   divCSVRefreshCss = {
@@ -22,6 +24,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     'display': 'inline'
   }
 
+  layerRefreshImageSrc = "/OWFTracks/assets/images/close.svg";
   searchText = "";
 
   public filename: string = "";
@@ -37,7 +40,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   recordsError = 0;
   recordsSelected = 0;
 
-  constructor(private notificationService: ActionNotificationService,
+  constructor(private configService: ConfigService,
+    private notificationService: ActionNotificationService,
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
@@ -51,6 +55,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     //console.log("csv-core initialized.");
+    this.config = this.configService.getConfig();
+    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
   }
 
   ngOnDestroy() {

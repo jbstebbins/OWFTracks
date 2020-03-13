@@ -31,13 +31,13 @@ import { CotToKmlWorker } from '../web-workers/cot-to-kml.worker';
   styleUrls: ['./cot-minotaur.component.css']
 })
 export class CotMinotaurComponent implements OnInit, OnDestroy {
+  config: ConfigModel = null;
   subscription: Subscription;
   mapStatusView: Subscription = null;
 
   owfApi = new OwfApi();
   worker: CotToKmlWorker;
 
-  config: ConfigModel = null;
   trackStatusInitial: Subscription = null;
   trackStatusInterval: Subscription = null;
   trackData: any = [];
@@ -101,7 +101,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
           this.trackStatusInitial.unsubscribe();
         }
 
-        this.trackStatusInitial = this.cotMinotaurSerice.getCotTracks(this.config.urls["TrackCount"], this.extent).subscribe(
+        this.trackStatusInitial = this.cotMinotaurSerice.getCotTracks(this.config.Urls["TrackCount"], this.extent).subscribe(
           response => {
             this.updateTrackData(response, true);
 
@@ -111,7 +111,7 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
             }
 
             setTimeout(() => {
-              this.trackStatusInterval = interval(this.config.urls["RefreshRate"]).pipe(
+              this.trackStatusInterval = interval(this.config.Urls["RefreshRate"]).pipe(
                 startWith(0),
                 switchMap(() => this.cotMinotaurSerice.getCotTracks("randomize", this.extent))
               ).subscribe(response => {
@@ -180,42 +180,42 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         "    <open>1</open> ";
       const kmlFooter = "</Document></kml>";
       const kmlStyles =
-        "      <Style id=\"air_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"air_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"air_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"air_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"air_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"air_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/air_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ground_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ground_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"missle_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/missle_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"seasurface_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/seasurface_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"ufo_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/ufo_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_air\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_frd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_lnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_neu\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_pnd\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
-        "      <Style id=\"unk_unk\"><IconStyle><scale>2.0</scale><Icon><href>/OWFTracks/assets/images/unk_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style>";
+        "      <Style id=\"air_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"air_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/air_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ground_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ground_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"missle_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/missle_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"seasurface_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/seasurface_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"ufo_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/ufo_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_air\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_air.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_frd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_frd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_lnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_lnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_neu\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_neu.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_pnd\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_pnd.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+        "      <Style id=\"unk_unk\"><IconStyle><scale>2.0</scale><Icon><href>" + this.configService.getBaseHref() + "/assets/images/unk_unk.png</href></Icon></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style>";
 
       const plotMessage = {
         "overlayId": "Tracks",

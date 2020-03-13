@@ -18,6 +18,7 @@ export class ConfigService {
 	config: Observable<ConfigModel> = null;
 	configModel: ConfigModel = null;
 	private baseUrl = 'assets/config.json';
+	private baseHref = '';
 
 	memoryPersistence = {};
 
@@ -39,6 +40,10 @@ export class ConfigService {
 
 	getConfig() {
 		return this.configModel;
+	}
+
+	getBaseHref() {
+		return this.configModel.Urls["baseUrl"] + "-" + this.configModel.version;
 	}
 
 	getMemoryValue(key) {

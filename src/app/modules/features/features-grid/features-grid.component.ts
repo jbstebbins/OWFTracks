@@ -28,13 +28,12 @@ const httpOptions = {
   styleUrls: ['./features-grid.component.css']
 })
 export class FeaturesGridComponent implements OnInit, OnDestroy {
-
+  config: ConfigModel = null;
   subscription: Subscription;
 
   owfApi = new OwfApi();
   worker: LyrToKmlWorker;
 
-  config: ConfigModel = null;
   credentialsRequired: boolean = false;
   connectionFailure: boolean = false;
 
@@ -87,6 +86,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     //console.log("features-grid initialized.");
+    this.config = this.configService.getConfig();
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.parentLayer.url.split("?");

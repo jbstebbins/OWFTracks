@@ -15,11 +15,10 @@ import * as _ from 'lodash';
 import { jsUtils } from '../../../library/jsUtils';
 import { OwfApi } from '../../../library/owf-api';
 
-import { ActionNotificationService } from '../../../services/action-notification.service';
-import { PreferencesService } from '../../../services/preferences.service';
-
 import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
+import { ActionNotificationService } from '../../../services/action-notification.service';
+import { PreferencesService } from '../../../services/preferences.service';
 import { MapMessagesService } from '../../../services/map-messages.service';
 
 declare var $: any;
@@ -35,6 +34,18 @@ interface Track {
   styleUrls: ['./features-core.component.css']
 })
 export class FeaturesCoreComponent implements OnInit, OnDestroy {
+  config: ConfigModel = null;
+  subscription: Subscription;
+  mapFeaturePlotUrl: Subscription = null;
+  mapStatusView: Subscription = null;
+
+  jsutils = new jsUtils();
+  owfApi = new OwfApi();
+  worker: LyrToKmlWorker;
+
+  mapView: any;
+  extent: any;
+
   divDragDropCss = {
     'display': 'none',
     'position': 'absolute',
@@ -63,18 +74,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     'display': 'inline'
   }
 
+  layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
+  gridRefreshImageSrc = "/OWFTracks/assets/images/layer-show.png";
   searchText = "";
-
-  subscription: Subscription;
-  mapFeaturePlotUrl: Subscription = null;
-  mapStatusView: Subscription = null;
-
-  jsutils = new jsUtils();
-  owfApi = new OwfApi();
-  worker: LyrToKmlWorker;
-
-  mapView: any;
-  extent: any;
 
   layerFields: any[] = [];
   layerFieldSelected: Track;
@@ -169,6 +171,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     //console.log("features-core initialized.");
+    this.config = this.configService.getConfig();
+
+    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
+    this.gridRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/layer-show.png";
 
     this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(
       mapView => {

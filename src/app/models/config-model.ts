@@ -1,13 +1,13 @@
 export class ConfigModel {
 	version: string;
 	buildDate: string;
-	urls: Urls[] | null;
+	Urls: Urls[] | null;
 	roles: string[] | null;
 
-	constructor(version: string, buildDate: string, urls: Urls[], roles: string[]) {
+	constructor(version: string, buildDate: string, Urls: Urls[], roles: string[]) {
 		this.version = version;
 		this.buildDate = buildDate;
-		this.urls = urls;
+		this.Urls = Urls;
 		this.roles = roles;
 	}
 }

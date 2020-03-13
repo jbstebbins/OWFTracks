@@ -1,6 +1,8 @@
 import { Component, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 
+import { ConfigModel } from '../../../models/config-model';
+import { ConfigService } from '../../../services/config.service';
 import { ActionNotificationService } from '../../../services/action-notification.service';
 
 @Component({
@@ -9,9 +11,11 @@ import { ActionNotificationService } from '../../../services/action-notification
   styleUrls: ['./track-core.component.css']
 })
 export class TrackCoreComponent implements OnInit, OnDestroy {
+  config: ConfigModel = null;
   subscription: Subscription;
 
-  constructor(private notificationService: ActionNotificationService) {
+  constructor(private configService: ConfigService,
+    private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
         console.log(`${payload.action}, received by track-core.component`);

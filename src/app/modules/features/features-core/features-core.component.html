@@ -6,7 +6,7 @@
         <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
           (onChange)="selectedLayer($event)"></p-dropdown>
         <div #layerRefresh id="layerRefresh" [ngStyle]="divLayerRefreshCss" (click)="refreshLayer($event)">
-          <img src="/OWFTracks/assets/images/refresh.svg" title="Refresh layer..."
+          <img src="{{layerRefreshImageSrc}}" title="Refresh layer..."
             style="width:20px;height:20px;padding:1px;margin-left:5px;">
         </div>
       </div>
@@ -22,7 +22,7 @@
         <input type="text" #lyrSearch name="Search LYR" id="lyrSearch" (keydown)="searchListener($event)"
           [(ngModel)]="searchText" title="Enter Search Text..." style="color: black;width: 150px;" />
         <div #layerRefresh id="searchRefresh" [ngStyle]="divLayerRefreshCss" (click)="searchRefresh($event)">
-          <img src="/OWFTracks/assets/images/close.svg" title="Clear search..."
+          <img src="{{layerRefreshImageSrc}}" title="Clear search..."
             style="width:20px;height:20px;padding:1px;margin-left:5px;">
         </div>
       </div>
@@ -37,7 +37,7 @@
 </div>
 <div class="row" style="margin: unset;">
   <div #gridRefresh id="gridRefresh" [ngStyle]="divRefreshCss" (click)="publishLayers($event)">
-    <img src="/OWFTracks/assets/images/layer-show.png" title="Resync with map...">
+    <img src="{{gridRefreshImageSrc}}" title="Resync with map...">
   </div>
   <div class="span3" style="background-color:#d0d9e7;height:calc(100vh - 115px);width: 20%;" id="leftmargin"
     (dragover)="gridDragOver($event)" (drop)="gridDragDrop($event)">

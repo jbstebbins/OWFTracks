@@ -1,16 +1,17 @@
 {
-	"version": "1.1.b15",
-	"buildDate": "2020/03/12",
-	"urls": {
-		"RefreshRate": "5000",
-		"TrackCount": "2000",
-		"OWFServer": "https://localhost:8443/owf",
-		"CotServiceActive": "CotServiceDev2",
-		"CotServiceProd": "",
-		"CotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
-		"CotServiceDev1": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
-		"CotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
-		"CotServerLocal": "assets/testdata/testfile.json"
+	"version": "1.1.1226",
+	"buildDate": "20200312",
+	"Urls": {
+		"baseUrl": "/OWFTracks",
+		"refreshRate": "5000",
+		"trackCount": "2000",
+		"owfServer": "https://localhost:8443/owf",
+		"cotServiceActive": "CotServiceDev2",
+		"cotServiceProd": "",
+		"cotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
+		"cotServiceDev1": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
+		"cotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
+		"cotServerLocal": "/OWFTracks-1.1.1226/assets/testdata/testfile.json"
 	},
 	"roles": ["role1", "role2"]
 }

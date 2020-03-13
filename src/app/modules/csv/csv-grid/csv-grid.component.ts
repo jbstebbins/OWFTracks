@@ -24,13 +24,12 @@ import { jsUtils } from '../../../library/jsUtils';
   styleUrls: ['./csv-grid.component.css']
 })
 export class CsvGridComponent implements OnInit, OnDestroy {
+  config: ConfigModel = null;
   subscription: Subscription;
 
   jsutils = new jsUtils();
   owfApi = new OwfApi();
   worker: CsvToKmlWorker;
-
-  config: ConfigModel = null;
 
   @ViewChild('agGridCSV') agGrid: AgGridAngular;
 

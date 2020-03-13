@@ -49,7 +49,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   divRefreshCss = {
     'z-index': 3,
-    'background-color': '#f1f1f1',
+    'background-color': 'gray',
     'border': '1px solid #d3d3d3',
     'float': 'right',
     'position': 'absolute',
@@ -400,7 +400,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true, width: "350px" },
+      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }
@@ -419,6 +419,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   private updateGridData() {
     // load the last state of the active.state
+    /*
     let restoreSettingsObservable: Observable<any> = this.preferencesService.getPreference("track.search.filter",
       "active.state");
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
@@ -433,6 +434,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         }
       }
     });
+    */
   }
 
   onFirstDataRendered(params) {
@@ -528,7 +530,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       let records = [...this.rowDataMonitor, newItem];
       this.rowDataMonitor = records;
 
-      this.publishLayers();
+      //this.publishLayers();
+      this.divRefreshCss["background-color"] = "red";
     } else {
       console.log("duplicate row, skipping.");
     }
@@ -572,7 +575,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       this.rowDataMonitor = records;
     }
 
-    this.publishLayers();
+    //this.publishLayers();
+    this.divRefreshCss["background-color"] = "red";
   }
 
   publishLayers() {
@@ -581,71 +585,77 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let service;
 
     // remove existing overlay 
-    this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
+    if ((this.divRefreshCss["background-color"] === "gray") ||
+      (this.divRefreshCss["background-color"] === "red") ||
+      (this.divRefreshCss["background-color"] === "green")) {
+      this.divRefreshCss["background-color"] = "orange";
+      this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
 
-    this.rowDataMonitor.forEach((row, index) => {
-      if (services[row.service.uuid] === undefined) {
-        service = {
-          service: row.service,
-          esriOIDFieldname: row.esriOIDFieldname,
-          idList: [row.esriOIDValue]
+      this.rowDataMonitor.forEach((row, index) => {
+        if (services[row.service.uuid] === undefined) {
+          service = {
+            service: row.service,
+            esriOIDFieldname: row.esriOIDFieldname,
+            idList: [row.esriOIDValue]
+          }
+
+          services[row.service.uuid] = service;
+        } else {
+          services[row.service.uuid].idList.push(row.esriOIDValue);
+        }
+      });
+
+      let plotMessageQueue = [];
+      let plotMessage = {};
+      let value;
+      Object.keys(services).forEach((layer) => {
+        value = services[layer];
+
+        plotMessage = {
+          "overlayId": "LYR-WatchList",
+          "featureId": "LYR-WatchList_" + value.service.featureId,
+          "name": value.service.name,
+          "format": "arcgis-feature",
+          "params": {
+            "serviceType": "feature",
+            "format": "image/png",
+            "refreshInterval": "0.10",
+            "zoom": "false",
+            "showLabels": "false",
+            "opacity": 1.0,
+            "transparent": "true",
+            "useProxy": "false",
+            "layers": "5",
+            "mode": "ondemand",
+            "definitionExpression": value.esriOIDFieldname + " IN (" + value.idList.join() + ")"
+          },
+          "mapId": 1,
+          "url": value.service.url
         }
 
-        services[row.service.uuid] = service;
-      } else {
-        services[row.service.uuid].idList.push(row.esriOIDValue);
-      }
-    });
+        plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
+      });
 
-    let plotMessageQueue = [];
-    let plotMessage = {};
-    let value;
-    Object.keys(services).forEach((layer) => {
-      value = services[layer];
-
-      plotMessage = {
-        "overlayId": "LYR-WatchList",
-        "featureId": "LYR-WatchList_" + value.service.featureId,
-        "name": value.service.name,
-        "format": "arcgis-feature",
-        "params": {
-          "serviceType": "feature",
-          "format": "image/png",
-          "refreshInterval": "0.10",
-          "zoom": "false",
-          "showLabels": "false",
-          "opacity": 1.0,
-          "transparent": "true",
-          "useProxy": "false",
-          "layers": "5",
-          "mode": "ondemand",
-          "definitionExpression": value.esriOIDFieldname + " IN (" + value.idList.join() + ")"
-        },
-        "mapId": 1,
-        "url": value.service.url
-      }
-
-      plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
-    });
-
-    // process the queue on timer
-    let queueInterval = setInterval(() => {
-      if (plotMessageQueue.length === 0) {
-        clearInterval(queueInterval);
-      } else {
-        let queueItem = plotMessageQueue.splice(0, 1);
-        if (queueItem.length > 0) {
-          this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
+      // process the queue on timer
+      let queueInterval = setInterval(() => {
+        if (plotMessageQueue.length === 0) {
+          clearInterval(queueInterval);
+          this.divRefreshCss["background-color"] = "green";
+        } else {
+          let queueItem = plotMessageQueue.splice(0, 1);
+          if (queueItem.length > 0) {
+            this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
+          }
         }
-      }
-    }, 2000);
+      }, 2000);
 
-    // save the current state of the active list
-    let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
-      "active.state", this.rowDataMonitor);
-    let saveSettings = saveSettingsObservable.subscribe(model => {
-      saveSettings.unsubscribe();
-    });
+      // save the current state of the active list
+      let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
+        "active.state", this.rowDataMonitor);
+      let saveSettings = saveSettingsObservable.subscribe(model => {
+        saveSettings.unsubscribe();
+      });
+    }
   }
 
   publishLayersLocationFinder(layer) {

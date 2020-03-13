@@ -29,7 +29,7 @@ export class OwfApi {
 	}
 
 	private shutdownWidget(sender: String, msg): void {
-		var self = this;
+		let self = this;
 
 		// remove listener override to prevent looping
 		this._WidgetStateController.removeStateEventOverrides({

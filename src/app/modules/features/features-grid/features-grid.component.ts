@@ -32,7 +32,18 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   subscription: Subscription;
 
   owfApi = new OwfApi();
-  worker: LyrToKmlWorker;
+  csvWorker: LyrToKmlWorker;
+  lyrWorker: LyrToKmlWorker;
+
+  divQueryStatusCss = {
+    'display': 'none',
+    'width': '100%',
+    'background-color': 'gold',
+    'z-index': '99',
+    'position': 'fixed',
+    'color': 'black'
+  }
+  queryStatusMessage = "please wait, querying services...";
 
   credentialsRequired: boolean = false;
   connectionFailure: boolean = false;
@@ -108,8 +119,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     // get layer info
     this.getLayerInfo();
 
-    // create inline worker
-    this.worker = new LyrToKmlWorker(() => {
+    // create inline worker for CSV
+    this.csvWorker = new LyrToKmlWorker(() => {
       // START OF WORKER THREAD CODE
 
       const kmlHeader = "<kml xmlns=\"http://www.opengis.net/kml/2.2\"> " +
@@ -215,11 +226,75 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       // END OF WORKER THREAD CODE
     });
 
-    this.worker.onmessage().subscribe((event) => {
+    this.csvWorker.onmessage().subscribe((event) => {
       this.owfApi.sendChannelRequest("map.feature.plot", event.data.kml);
     });
 
-    this.worker.onerror().subscribe((data) => {
+    this.csvWorker.onerror().subscribe((data) => {
+      console.log(data);
+    });
+
+    // create inline worker for LYR
+    this.lyrWorker = new LyrToKmlWorker(() => {
+      // START OF WORKER THREAD CODE
+
+      const formatLyr = (data) => {
+        let records = [];
+        let rowGeomertyData = {};
+        console.log(data);
+
+        let record = {};
+        data.model.features.forEach((row) => {
+          record = {};
+
+          data.columnDefinitions.forEach((column, index) => {
+            record[column.field] = row.attributes[column.field];
+
+            if (data.columnList[column.field].type === "esriFieldTypeDate") {
+              if ((record[column.field] !== undefined) && (record[column.field] !== null) &&
+                (record[column.field] !== "")) {
+                try {
+                  let ldate = new Date(record[column.field]).toLocaleString();
+                  record[column.field] = ldate;
+                }
+                catch (error) {
+                  console.log('.. error converting date parsing layer/', error);
+                }
+              }
+            }
+          });
+
+          rowGeomertyData[row.attributes[data.layerIDField]] = row.geometry;
+          records.push(record);
+        });
+
+        // this is from DedicatedWorkerGlobalScope ( because of that we have postMessage and onmessage methods )
+        // and it can't see methods of this class
+        // @ts-ignore
+        postMessage({
+          status: "layer query complete", rowData: records, geomertyData: rowGeomertyData
+        });
+
+        records = [];
+        rowGeomertyData = {};
+      };
+
+      // @ts-ignore
+      onmessage = (evt) => {
+        formatLyr(evt.data);
+      };
+      // END OF WORKER THREAD CODE
+    });
+
+    this.lyrWorker.onmessage().subscribe((event) => {
+      this.rowData = event.data.rowData;
+      this.rowGeomertyData = event.data.geomertyData;
+      // this.agGrid.api.setRowData(this.rowData);
+
+      this.setQueryStatus("", "reset");
+    });
+
+    this.lyrWorker.onerror().subscribe((data) => {
       console.log(data);
     });
   }
@@ -230,12 +305,17 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     // prevent memory leak when component destroyed
     this.subscription.unsubscribe();
 
-    if (this.worker) {
-      this.worker.terminate();
+    if (this.csvWorker) {
+      this.csvWorker.terminate();
+    }
+    if (this.lyrWorker) {
+      this.lyrWorker.terminate();
     }
   }
 
   private getLayerInfo() {
+    this.setQueryStatus("", "reset")
+
     // get the layer definition
     let url = this.layerBaseUrl + "?" + "f=json" + this.layerToken;
     let urlMetadata: Observable<any>;
@@ -325,6 +405,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           this.credentialsRequired = true;
           this.getLayerInfo();
         } else {
+          this.setQueryStatus("query features...", "error")
           window.alert('Search Widget: HTTP other layer error; not trapped.\n' +
             this.layerBaseUrl);
         }
@@ -332,6 +413,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   private createColumnDefs() {
+    this.setQueryStatus("", "reset")
+
     this.columnDefinitions = [];
     this.columnList = {};
 
@@ -432,6 +515,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
   retrieveLayerData(field?, value?) {
     // retrieve the record count
+    this.setQueryStatus("querying data...");
     let url = this.layerBaseUrl + "/query?" + "f=json" +
       "&returnGeometry=true" +
       "&returnQueryGeometry=true" +
@@ -443,25 +527,26 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       "&outSR=4326";
 
     // bound to map extent
-    if ((this.parentMapView !== undefined) && (this.parentMapView !== null)) {
+    if (((field === undefined) || (field === null)) &&
+      (this.parentMapView !== undefined) && (this.parentMapView !== null)) {
       url += "&inSR=4326" +
         "&geometryType=esriGeometryEnvelope" +
         "&spatialRel=esriSpatialRelContains" +
         "&geometry=" + this.parentMapView.bounds.southWest.lon + "%2C" + this.parentMapView.bounds.southWest.lat + "%2C" +
-          this.parentMapView.bounds.northEast.lon + "%2C" + this.parentMapView.bounds.northEast.lat;
+        this.parentMapView.bounds.northEast.lon + "%2C" + this.parentMapView.bounds.northEast.lat;
     }
 
     // add field filters if required
     if ((field !== undefined) && (value !== undefined)) {
       if (this.columnList[field].type !== "esriFieldTypeString") {
         if (value.charAt(0) === "=") {
-          url += "&where=" + field + "+%3D+" + encodeURIComponent("'" + value.slice(1) + "'");
+          url += "&where=" + field + "+%3D+" + encodeURIComponent("\"" + value.slice(1) + "\"");
         } else if (value.charAt(0) === "<") {
-          url += "&where=" + field + "+%3C+" + encodeURIComponent("'" + value.slice(1) + "'");
+          url += "&where=" + field + "+%3C%3D+" + encodeURIComponent("\"" + value.slice(1) + "\"");
         } else if (value.charAt(0) === ">") {
-          url += "&where=" + field + "+%3E+" + encodeURIComponent("'" + value.slice(1) + "'");
+          url += "&where=" + field + "+%3E+" + encodeURIComponent("\"" + value.slice(1) + "\"");
         } else {
-          url += "&where=" + field + "+%3E+" + encodeURIComponent("'" + value + "'");
+          url += "&where=" + field + "+%3E%3D+" + encodeURIComponent("\"" + value + "\"");
         }
       } else {
         let strValue = value.toLowerCase();
@@ -497,6 +582,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     let urlRecordSubscription = urlRecorddata.subscribe(model => {
       urlRecordSubscription.unsubscribe();
 
+      this.setQueryStatus("data received, processing...");
       // send notification to parent that partial result was returned
       if (model.features) {
         let recordCount = model.features.length;
@@ -506,39 +592,14 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           this.notificationService.publisherAction({ action: 'LYR ALL DATA', value: recordCount });
         }
 
-        this.rowData = [];
-        this.rowGeomertyData = {};
-
-        let records = [];
-        let record = {};
-        model.features.forEach((row) => {
-          record = {};
-
-          this.columnDefinitions.forEach((column, index) => {
-            record[column.field] = row.attributes[column.field];
-
-            if (this.columnList[column.field].type === "esriFieldTypeDate") {
-              if ((record[column.field] !== undefined) && (record[column.field] !== null) &&
-                (record[column.field] !== "")) {
-                try {
-                  let lvar = "" + record[column.field] + "";
-                  let ldate = new Date(record[column.field]).toLocaleString();
-                  record[column.field] = ldate;
-                }
-                catch (error) {
-                  console.log('.. error converting date parsing layer/', error);
-                }
-              }
-            }
-          });
-
-          this.rowGeomertyData[row.attributes[this.layerIDField]] = row.geometry;
-          records.push(record);
+        this.lyrWorker.postMessage({
+          model: model,
+          columnDefinitions: this.columnDefinitions,
+          columnList: this.columnList,
+          layerIDField: this.layerIDField
         });
-
-        this.rowData = records;
-        // this.agGrid.api.setRowData(this.rowData);
       } else {
+        this.setQueryStatus("data received, error... /code-" + model.error.code + "/" + model.error.message, "error");
         alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
       }
     });
@@ -556,7 +617,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     let oid = selectedRow[this.layerIDField];
     let geometry = this.rowGeomertyData[oid];
 
-    this.worker.postMessage({
+    this.csvWorker.postMessage({
       overlayId: "TMP-Viewer", filename: this.parentLayer.name,
       trackNameField: this.layerTitleField,
       track: selectedRow,
@@ -569,6 +630,27 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         featureId: (this.parentLayer.name + "_" + selectedRow[this.layerTitleField]).replace(/ /gi, "_")
       });
     }, 10000);
+  }
+
+  setQueryStatus(message, status?) {
+    let resetMessage = "please wait, querying services...";
+    if ((status !== undefined) && (status !== null)) {
+      if (status === "error") {
+        this.queryStatusMessage = resetMessage + " /" + message;
+        this.divQueryStatusCss.display = "table-cell";
+        this.divQueryStatusCss["background-color"] = "red";
+        this.divQueryStatusCss.color = "white";
+      } else if (status === "reset") {
+        this.divQueryStatusCss.display = "none";
+        this.divQueryStatusCss["background-color"] = "gold";
+        this.divQueryStatusCss.color = "black";
+      }
+    } else {
+      this.queryStatusMessage = resetMessage + " /" + message;
+      this.divQueryStatusCss.display = "table-cell";
+      this.divQueryStatusCss["background-color"] = "gold";
+      this.divQueryStatusCss.color = "black";
+    }
   }
 
   private handleError(error: HttpErrorResponse) {

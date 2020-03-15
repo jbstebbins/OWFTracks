@@ -18,7 +18,7 @@ if (environment.production) {
 JQ(document).ready(function() {
 	OWF.ready(function() {
 		let owfapi = new OwfApi();
-		owfapi.initialize();
+		owfapi.initialize(owfapi.shutdownWidget);
 
 		platformBrowserDynamic().bootstrapModule(AppModule)
 			.catch(err => console.error(err));

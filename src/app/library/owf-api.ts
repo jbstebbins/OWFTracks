@@ -3,49 +3,39 @@ declare var Ozone: any;
 
 export class OwfApi {
 	private _WidgetStateController: any;
+	private _widgetEventingController: any;
 	subcribedChannels: string[] = [];
 
 	constructor() { }
 
-	public initialize(): void {
-		let self = this;
-
+	public initialize(callback: Function): void {
+		this._widgetEventingController = Ozone.eventing.Widget.getInstance();
 		this._WidgetStateController = Ozone.state.WidgetState.getInstance({
-			widgetEventingController: Ozone.eventing.Widget.getInstance(),
-			autoInit: true,
-
+			widgetEventingController: this._widgetEventingController,
 			// this is fired on any event that you are registered for.
 			// the msg object tells us what event it was
 			onStateEventReceived: function (sender: String, msg) {
-				if (msg.eventName === 'beforeclose') {
-					self.shutdownWidget(null, null);
+				if ((msg.eventName === 'beforeclose') || (msg.eventName === 'beforedestroy')) {
+					this._WidgetStateController.removeStateEventOverrides({
+						event: [event],
+						callback: function () {
+							callback({channels: this.subcribedChannels});
+							Ozone.state.WidgetState().closeWidget();
+						}.bind(this)
+					});
 				}
-			}
+			}.bind(this)
 		});
-		
+
 		this._WidgetStateController.addStateEventOverrides({
-			events: ['beforeclose']
+			events: ['beforeclose', 'beforedestroy']
 		});
 	}
 
-	private shutdownWidget(sender: String, msg): void {
-		let self = this;
-
-		// remove listener override to prevent looping
-		this._WidgetStateController.removeStateEventOverrides({
-			events: ['beforeclose'],
-			callback: function () {
-				//console.log('.. widget shutdown!!');
-
-				// unpublish active track layers
-
-				// unsubcribe the events
-				self.subcribedChannels.forEach(element => {
-					OWF.Eventing.unsubscribe(element);
-				});
-
-				self._WidgetStateController.closeWidget();
-			}
+	public shutdownWidget(payload): void {
+		// unsubcribe the events
+		payload.channels.forEach(element => {
+			OWF.Eventing.unsubscribe(element);
 		});
 	}
 

@@ -21,8 +21,8 @@
           [(ngModel)]="layerFieldSelected" optionLabel="title"></p-dropdown>
         <input type="text" #lyrSearch name="Search LYR" id="lyrSearch" (keydown)="searchListener($event)"
           [(ngModel)]="searchText" title="Enter Search Text..." style="color: black;width: 150px;" />
-        <div #layerRefresh id="searchRefresh" [ngStyle]="divLayerRefreshCss" (click)="searchRefresh($event)">
-          <img src="{{layerRefreshImageSrc}}" title="Clear search..."
+        <div #layerSearch id="searchRefresh" [ngStyle]="divLayerRefreshCss" (click)="searchRefresh($event)">
+          <img src="{{layerSearchImageSrc}}" title="Clear search..."
             style="width:20px;height:20px;padding:1px;margin-left:5px;">
         </div>
       </div>

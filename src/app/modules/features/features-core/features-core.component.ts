@@ -75,6 +75,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
+  layerSearchImageSrc = "/OWFTracks/assets/images/close.svg";
   gridRefreshImageSrc = "/OWFTracks/assets/images/layer-show.png";
   searchText = "";
 
@@ -173,7 +174,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     //console.log("features-core initialized.");
     this.config = this.configService.getConfig();
 
-    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
+    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/refresh.svg";
+    this.layerSearchImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
     this.gridRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/layer-show.png";
 
     this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(

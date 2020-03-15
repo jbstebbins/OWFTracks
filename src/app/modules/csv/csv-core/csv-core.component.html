@@ -3,7 +3,8 @@
   <div class="row" style="height: 35px;">
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent && isDataValid">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch"
-          [(ngModel)]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
+          [(ngModel)]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..."
+          style="color: black;" />
         <div #layerRefresh id="layerRefresh" [ngStyle]="divCSVRefreshCss" (click)="refreshCSV($event)">
           <img src="{{layerRefreshImageSrc}}" title="Clear filters..."
             style="width:20px;height:20px;padding:1px;margin-left:5px;">

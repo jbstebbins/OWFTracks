@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectorRef, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectorRef, Input, ViewChild, NgZone } from '@angular/core';
 import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError } from 'rxjs';
 import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
 
@@ -114,7 +114,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   rowDataMonitor: any[] = [];
 
-  constructor(private configService: ConfigService,
+  constructor(private _zone: NgZone,
+    private configService: ConfigService,
     private mapMessageService: MapMessagesService,
     private notificationService: ActionNotificationService,
     private preferencesService: PreferencesService,
@@ -357,7 +358,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                     layer.params = layerDefinition.params;
 
                     this.layerSelected = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layer.uuid };
-                    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+                    this._zone.run(() => {
+                      this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+                    });
                   }
                 }
               });
@@ -376,11 +379,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
 
               // if first time
-              if (this.layers.length === 1) {
-                this.selectedLayer({ originalEvent: null, value: newItem });
-              } else {
-                this.loadComponent = true;
-              }
+              this._zone.run(() => {
+                if (this.layers.length === 1) {
+                  this.selectedLayer({ originalEvent: null, value: newItem });
+                } else {
+                  this.loadComponent = true;
+                }
+              });
             }
           }
         } else {

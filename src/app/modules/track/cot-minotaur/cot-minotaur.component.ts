@@ -58,7 +58,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   domLayout = "normal";
   rowSelection = "single";
 
-  extent: any;
+  extent: any = "-3.108922936594193,-147.85116261717408," +
+    "61.631880192109456,-62.06991261719688";
   shutdown:boolean = false;
 
   constructor(private configService: ConfigService,
@@ -94,8 +95,10 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         this.mapView = mapView;
 
         // do intial get on tracks on view change
-        this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
-          mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
+        if (this.mapView.mapId === 1) {
+          this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
+            mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
+        }
 
         if (this.trackStatusInitial) {
           this.trackStatusInitial.unsubscribe();
@@ -222,7 +225,8 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
         "featureId": "Minotaur",
         "feature": undefined,
         "name": "Minotaur",
-        "zoom": false
+        "zoom": false,
+        "mapId": 1
       };
 
       const getTrackStyle = (type, threat) => {

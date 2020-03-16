@@ -187,6 +187,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
             kmlPayload += "</coordinates></LineString> ";
           });
         } else if (data.geometry.hasOwnProperty("rings")) {
+          plotMessage.params.opacity = 0.35;
           kmlPayload += "<styleUrl>#lyrpolygon</styleUrl> ";
 
           let ringsArray = data.geometry.rings;

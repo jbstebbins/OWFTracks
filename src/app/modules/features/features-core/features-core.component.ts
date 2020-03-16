@@ -44,7 +44,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   worker: LyrToKmlWorker;
 
   mapView: any;
-  extent: any;
+  extent: any = "-3.108922936594193,-147.85116261717408," +
+    "61.631880192109456,-62.06991261719688";
 
   divDragDropCss = {
     'display': 'none',
@@ -183,13 +184,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         this.mapView = mapView;
 
         // do intial get on tracks on view change
-        this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
-          mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
+        if (this.mapView.mapId === 1) {
+          this.extent = mapView.bounds.southWest.lat + "," + mapView.bounds.northEast.lat + "," +
+            mapView.bounds.southWest.lon + "," + mapView.bounds.northEast.lon;
 
-        this.notificationService.publisherAction({
-          action: 'LYR MAP REFRESHED',
-          value: { field: 'mapExtent', value: this.mapView }
-        });
+          this.notificationService.publisherAction({
+            action: 'LYR MAP REFRESHED',
+            value: { field: 'mapExtent', value: this.mapView }
+          });
+        }
       });
 
     // create inline worker
@@ -211,7 +214,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         "params": {
           "opacity": 1.0,
           "showLabels": true
-        }
+        },
+        "mapId": 1
       };
 
       const formatKml = (data) => {
@@ -243,6 +247,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             kmlPayload += "</coordinates></LineString> ";
           });
         } else if (data.geometry.hasOwnProperty("rings")) {
+          plotMessage.params.opacity = 0.35;
           kmlPayload += "<styleUrl>#lyrpolygon</styleUrl> ";
 
           let ringsArray = data.geometry.rings;
@@ -674,7 +679,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
           }
         }
-      }, 2000);
+      }, 1000);
 
       // save the current state of the active list
       let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",

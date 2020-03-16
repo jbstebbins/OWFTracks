@@ -427,7 +427,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   private updateGridData() {
     // load the last state of the active.state
-    /*
     let restoreSettingsObservable: Observable<any> = this.preferencesService.getPreference("track.search.filter",
       "active.state");
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
@@ -435,6 +434,38 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
       if (model.value !== undefined) {
         let records = JSON.parse(model.value);
+        console.log("preferences", records);
+        console.log("config", this.config.tokenServices);
+        // check all records to make sure they are not in the serviceurl/token list
+        let urlArray = [], urlParamArray = [], urlParams = "", index = 0;
+        this.config.tokenServices.forEach((token) => {
+          records.forEach((record) => {
+            if (record.service.url.includes(token.serviceUrl)) {
+              urlArray = record.service.url.split("?");
+              urlParamArray = urlArray[1].split("&");
+
+              record.service.tempArea.token = token.token;
+              index = 0;
+              urlParams = "";
+              urlParamArray.forEach((param) => {
+                if (param.startsWith("token=")) {
+                } else {
+                  if (index === 0) {
+                    urlParams = param;
+                  } else {
+                    urlParams += "&" + param;
+                  }
+                }
+
+                index++;
+              });
+
+              record.service.url = urlArray[0] +
+                ((urlParams !== "") ? ("?" + urlParams + "&token=" + token.token) : "?token=" + token.token);
+            }
+          });
+        });
+
         this.rowDataMonitor = [...records];
 
         if (records.length > 0) {
@@ -442,7 +473,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         }
       }
     });
-    */
   }
 
   onFirstDataRendered(params) {
@@ -614,7 +644,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       });
 
       let plotMessageQueue = [];
-      let plotMessage = {};
+      let plotMessage: any = {};
       let value;
       Object.keys(services).forEach((layer) => {
         value = services[layer];
@@ -624,22 +654,11 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           "featureId": "LYR-WatchList_" + value.service.featureId,
           "name": value.service.name,
           "format": "arcgis-feature",
-          "params": {
-            "serviceType": "feature",
-            "format": "image/png",
-            "refreshInterval": "0.10",
-            "zoom": "false",
-            "showLabels": "false",
-            "opacity": 1.0,
-            "transparent": "true",
-            "useProxy": "false",
-            "layers": "5",
-            "mode": "ondemand",
-            "definitionExpression": value.esriOIDFieldname + " IN (" + value.idList.join() + ")"
-          },
+          "params": value.service.params,
           "mapId": 1,
           "url": value.service.url
         }
+        plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
 
         plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
       });

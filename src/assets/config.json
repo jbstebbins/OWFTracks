@@ -13,5 +13,11 @@
 		"cotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
 		"cotServerLocal": "/OWFTracks-1.1.1226/assets/testdata/testfile.json"
 	},
+	"tokenServices": [{
+		"serviceUrl": "c3c-ap101-mc-01.maincgtest.adscgtest.uscg.mil:6443",
+		"token": "ZfH6BcMbWJTs3AJNw-bNAnpGzO-ZDTperUqq0Mw0YUzvUvN8TbImdYLGLuffnHQ4PHYG3axDVD2gXxyn4HeFXCAL1Un-TusVT_XhtKUUP9JM7Dbf573uEfrCVNN1nsb6"
+	}, {
+		"url": "/GlobalRepo/Catalogs/tracks-iocwk.token"
+	}],
 	"roles": ["role1", "role2"]
 }

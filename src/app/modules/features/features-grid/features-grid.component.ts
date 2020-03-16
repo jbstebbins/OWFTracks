@@ -66,6 +66,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   rowData: any[] = [];
   rowGeomertyData: {};
   layerBaseUrl: string = "";
+  layerServiceUrl: string = "";
   layerToken: string = "";
   layerRecords: number = 0;
   layerFields: any[] = [];
@@ -103,16 +104,31 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     let urlArray = [] = this.parentLayer.url.split("?");
     this.layerBaseUrl = urlArray[0];
 
-    let urlParamArray = [];
+    // get referer
+    let urlParser = new URL(this.layerBaseUrl);
+    this.layerServiceUrl = urlParser.host;
+
+    // get the token if available; else parse it
     this.layerToken = "";
-    if (urlArray.length > 1) {
-      urlParamArray = urlArray[1].split("&");
-      if (urlParamArray.length >= 1) {
-        urlParamArray.forEach((value, index) => {
-          if (value.startsWith("token=")) {
-            this.layerToken = "&" + value;
-          }
-        });
+    this.config.tokenServices.forEach((referer) => {
+      if ((referer.serviceUrl !== undefined) && (referer.serviceUrl !== null) &&
+        (referer.serviceUrl === this.layerServiceUrl)) {
+          this.layerToken = "&token=" + referer.token;
+        }
+    });
+
+    // get token from params
+    if (this.layerToken === "") {
+      let urlParamArray = [];
+      if (urlArray.length > 1) {
+        urlParamArray = urlArray[1].split("&");
+        if (urlParamArray.length >= 1) {
+          urlParamArray.forEach((value, index) => {
+            if (value.startsWith("token=")) {
+              this.layerToken = "&" + value;
+            }
+          });
+        }
       }
     }
 
@@ -415,74 +431,80 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.setQueryStatus("", "reset")
 
-    this.columnDefinitions = [];
-    this.columnList = {};
+    if (this.layerFields) {
+      this.columnDefinitions = [];
+      this.columnList = {};
 
-    let fieldList = "";
-    let itemNameTemp = "";
-    let newItem;
-    this.layerFields.forEach((item) => {
-      this.columnList[item.name] = item;
+      let fieldList = "";
+      let itemNameTemp = "";
+      let newItem;
+      this.layerFields.forEach((item) => {
+        this.columnList[item.name] = item;
 
-      itemNameTemp = item.name.toLowerCase();
-      if (itemNameTemp.includes("name") || itemNameTemp.includes("title")) {
-        this.layerTitleField = item.name;
-      }
-
-      if (item.type === "esriFieldTypeOID") {
-        this.layerIDField = item.name;
-      }
-      /* http://resources.esri.com/help/9.3/arcgisserver/adf/java/help/api/arcgiswebservices/com/esri/arcgisws/EsriFieldType.html
-      <enumeration value="esriFieldTypeInteger"/>
-      <enumeration value="esriFieldTypeSmallInteger"/>
-      <enumeration value="esriFieldTypeDouble"/>
-      <enumeration value="esriFieldTypeSingle"/>
-      <enumeration value="esriFieldTypeString"/>
-      <enumeration value="esriFieldTypeDate"/>
-      <enumeration value="esriFieldTypeGeometry"/>
-      <enumeration value="esriFieldTypeOID"/>
-      <enumeration value="esriFieldTypeBlob"/>
-      <enumeration value="esriFieldTypeGlobalID"/>
-      <enumeration value="esriFieldTypeRaster"/>
-      <enumeration value="esriFieldTypeGUID"/>
-      <enumeration value="esriFieldTypeXML"/>
-
-      public DateTime FromUnixTime(long unixTime) { var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); return epoch.AddSeconds(unixTime); }  
-      */
-      if ((item.type !== "esriFieldTypeGeometry") && (item.type !== "esriFieldTypeBlob") &&
-        (item.type !== "esriFieldTypeRaster") && (item.type !== "esriFieldTypeXML")) {
-        fieldList += item.name + ",";
-
-        newItem = {
-          field: item.name,
-          sortable: true,
-          filter: true,
-          dndSource: (item.name === this.layerIDField)
-        };
-
-        if (item.name === this.layerIDField) {
-          this.columnDefinitions.splice(0, 0, newItem);
-        } else if (item.name === this.layerTitleField) {
-          this.columnDefinitions.splice(1, 0, newItem);
-        } else {
-          this.columnDefinitions.push(newItem);
+        itemNameTemp = item.name.toLowerCase();
+        if (itemNameTemp.includes("name") || itemNameTemp.includes("title")) {
+          this.layerTitleField = item.name;
         }
-      } else {
-        console.log(".. skipped item def - " + item.type);
+
+        if (item.type === "esriFieldTypeOID") {
+          this.layerIDField = item.name;
+        }
+        /* http://resources.esri.com/help/9.3/arcgisserver/adf/java/help/api/arcgiswebservices/com/esri/arcgisws/EsriFieldType.html
+        <enumeration value="esriFieldTypeInteger"/>
+        <enumeration value="esriFieldTypeSmallInteger"/>
+        <enumeration value="esriFieldTypeDouble"/>
+        <enumeration value="esriFieldTypeSingle"/>
+        <enumeration value="esriFieldTypeString"/>
+        <enumeration value="esriFieldTypeDate"/>
+        <enumeration value="esriFieldTypeGeometry"/>
+        <enumeration value="esriFieldTypeOID"/>
+        <enumeration value="esriFieldTypeBlob"/>
+        <enumeration value="esriFieldTypeGlobalID"/>
+        <enumeration value="esriFieldTypeRaster"/>
+        <enumeration value="esriFieldTypeGUID"/>
+        <enumeration value="esriFieldTypeXML"/>
+
+        public DateTime FromUnixTime(long unixTime) { var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc); return epoch.AddSeconds(unixTime); }  
+        */
+        if ((item.type !== "esriFieldTypeGeometry") && (item.type !== "esriFieldTypeBlob") &&
+          (item.type !== "esriFieldTypeRaster") && (item.type !== "esriFieldTypeXML")) {
+          fieldList += item.name + ",";
+
+          newItem = {
+            field: item.name,
+            sortable: true,
+            filter: true,
+            dndSource: (item.name === this.layerIDField)
+          };
+
+          if (item.name === this.layerIDField) {
+            this.columnDefinitions.splice(0, 0, newItem);
+          } else if (item.name === this.layerTitleField) {
+            this.columnDefinitions.splice(1, 0, newItem);
+          } else {
+            this.columnDefinitions.push(newItem);
+          }
+        } else {
+          console.log(".. skipped item def - " + item.type);
+        }
+      });
+
+      if (this.layerTitleField === "") {
+        this.layerTitleField = this.layerIDField;
       }
-    });
 
-    if (this.layerTitleField === "") {
-      this.layerTitleField = this.layerIDField;
+      this.loadGrid = true;
+
+      this.notificationService.publisherAction({
+        action: 'LYR FIELD LIST',
+        value: { fields: fieldList, id: this.layerIDField, title: this.layerTitleField }
+      });
+
+      return this.columnDefinitions;
+    } else {
+      this.setQueryStatus("error", "no field information received; check token!")
+      return null;
     }
-
-    this.loadGrid = true;
-
-    this.notificationService.publisherAction({
-      action: 'LYR FIELD LIST',
-      value: { fields: fieldList, id: this.layerIDField, title: this.layerTitleField }
-    });
-    return this.columnDefinitions;
   }
 
   sendNotification(payload) {

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { ConfigModel } from '../../../models/config-model';
@@ -26,6 +26,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   layerRefreshImageSrc = "/OWFTracks/assets/images/close.svg";
   searchText = "";
+  showLabels = false;
 
   public filename: string = "";
   public color: any = "#f38c06";
@@ -35,6 +36,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   public isDataValid: boolean = true;
   public loadStatus: string = "(no file selected!)";
   @ViewChild('csvStatus') csvStatus: ElementRef;
+  @ViewChild('colorPicker') colorPicker: ElementRef;
   @ViewChild('csvFileUpload') csvFileUpload: ElementRef;
   recordsLoaded = 0;
   recordsError = 0;
@@ -152,7 +154,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleClick($event: any): void {
-    this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { color: this.color } });
+    this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { showLabels: this.showLabels, color: this.color } });
   }
 
   isValidCSVFile(file: any) {
@@ -172,5 +174,14 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   refreshCSV($event) {
     this.searchText = "";
     this.notificationService.publisherAction({ action: 'CSV SEARCH VALUE', value: "" });
+  }
+
+  colorPickerSpanClicked($event) {
+    let element: any = this.colorPicker;
+    let frame = element.el.nativeElement.children[0].children[1];
+    frame.style.position = 'fixed';
+    frame.style.top = '83px';
+    frame.style.left = 'unset';
+    frame.style.right = '0px';
   }
 }

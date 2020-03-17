@@ -105,7 +105,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           this.worker.postMessage({
             overlayId: "CSV-Viewer",
             filename: this.parentFileName, tracks: tracks,
-            color: payload.value.color, columnTracking: this.columnTracking
+            showLabels: payload.value.showLabels, color: payload.value.color, 
+            columnTracking: this.columnTracking
           });
         }
       });
@@ -155,6 +156,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         plotMessage.overlayId = data.overlayId;
         plotMessage.featureId = data.filename;
         plotMessage.name = data.filename;
+        plotMessage.params.showLabels = data.showLabels;
 
         // format and return to main thread
         let kmlPayload = "";

@@ -1,7 +1,7 @@
 <div class="container"
-  style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 65px;font-size: 12px;">
-  <div class="row" style="height: 30px;">
-    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
+  style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 65px;overflow-y:auto;font-size: 12px;">
+  <div class="row">
+    <div class="col-9" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent" style="height: 22px;">Layer:
         <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
           (onChange)="selectedLayer($event)"></p-dropdown>
@@ -11,12 +11,12 @@
         </div>
       </div>
     </div>
-    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
+    <div class="col-3" style="margin-top: 5px;padding: unset;text-align: center;font-size:smaller;float:right;">
       <label id="lyrStatus" #lyrStatus>{{loadStatus}}</label>
     </div>
   </div>
-  <div class="row" style="height: 30px;">
-    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
+  <div class="row">
+    <div class="col-12" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent">Search: <p-dropdown #lyrOptions id="lyrFields" [options]="layerFields"
           [(ngModel)]="layerFieldSelected" optionLabel="title"></p-dropdown>
         <input type="text" #lyrSearch name="Search LYR" id="lyrSearch" (keydown)="searchListener($event)"

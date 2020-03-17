@@ -159,7 +159,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           this.layerFields = newFields;
         }
 
-        this.loadStatus = "(total records-" + this.layerRecords + "/ partial view-" + this.layerPartial + ")";
+        this.loadStatus = "(total records-" + this.layerRecords + "<br/>partial view-" + this.layerPartial + ")";
       });
 
     this.gridOptions = <GridOptions>{

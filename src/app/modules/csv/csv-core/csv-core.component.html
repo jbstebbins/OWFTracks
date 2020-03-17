@@ -1,6 +1,6 @@
 <div class="container"
-  style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;font-size: 12px;">
-  <div class="row" style="height: 35px;">
+  style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 35px;overflow-y:auto;font-size: 12px;">
+  <div class="row">
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <div *ngIf="loadComponent && isDataValid">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch"
           [(ngModel)]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..."
@@ -10,15 +10,18 @@
             style="width:20px;height:20px;padding:1px;margin-left:5px;">
         </div>
         <span style="float: right;height: 22px;display: flex;">
-          <p-colorPicker [(ngModel)]="color" [ngStyle]="{'height':'22px'}"></p-colorPicker>
-          <button pButton type="button" icon="pi pi-check" iconPos="left" styleClass="ui-button-info"
+          <p-checkbox [(ngModel)]="showLabels" binary="true" title="show labels?"></p-checkbox>
+          <span #colorPickerSpan (click)="colorPickerSpanClicked($event)">
+            <p-colorPicker #colorPicker [(ngModel)]="color" [ngStyle]="{'height':'22px'}"></p-colorPicker>&nbsp;&nbsp;
+          </span>
+          <button pButton type="button" icon="pi pi-globe" iconPos="left" styleClass="ui-button-info"
             (click)="handleClick($event)" style="height: 23px;"></button>
         </span>
       </div>
     </div>
-    <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
+    <!--div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <label id="csvStatus" #csvStatus>{{loadStatus}}</label>
-    </div>
+    </div-->
     <div class="col-md" style="margin-top: 5px;padding: unset;text-align: center;">
       <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (click)="fileSelectListener($event)"
         (change)="uploadListener($event)" accept=".csv, .xls, .xslx" style="display:inline;" />

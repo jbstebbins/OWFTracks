@@ -159,7 +159,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           this.layerFields = newFields;
         }
 
-        this.loadStatus = "(total records-" + this.layerRecords + "<br/>partial view-" + this.layerPartial + ")";
+        this.loadStatus = "(total records-" + this.layerRecords + "/ partial view-" + this.layerPartial + ")";
       });
 
     this.gridOptions = <GridOptions>{
@@ -468,8 +468,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                 index++;
               });
 
-              record.service.url = urlArray[0] +
-                ((urlParams !== "") ? ("?" + urlParams + "&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
+              record.service.url = urlArray[0] + ((urlParams !== "") ? ("?" + urlParams) : "");
+              if (record.service.tempArea.token !== "") {
+                record.service.url += ((urlParams !== "") ? ("&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
+              }
             }
           });
         });
@@ -477,7 +479,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         this.rowDataMonitor = [...records];
 
         if (records.length > 0) {
-          this.loadStatus = "(no layer selected!/active list ready!)";
+          this.loadStatus = "(no layer selected!/ active list ready!)";
         }
       }
     });

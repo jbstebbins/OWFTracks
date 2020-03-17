@@ -132,7 +132,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           this.layersDefinition.forEach((value, item) => {
             if (value.uuid === this.layerSelected.uuid) {
               value.tempArea.credentialsRequired = payload.value.credentialsRequired;
-              value.tempArea.token = payload.value.token;
+              value.tempArea.token = payload.value.token.replace("&token=", "").replace("token=", "");
               value.tempArea.baseUrl = payload.value.baseUrl;
             }
           });
@@ -444,8 +444,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
       if (model.value !== undefined) {
         let records = JSON.parse(model.value);
-        console.log("preferences", records);
-        console.log("config", this.config.tokenServices);
         // check all records to make sure they are not in the serviceurl/token list
         let urlArray = [], urlParamArray = [], urlParams = "", index = 0;
         this.config.tokenServices.forEach((token) => {
@@ -454,7 +452,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               urlArray = record.service.url.split("?");
               urlParamArray = urlArray[1].split("&");
 
-              record.service.tempArea.token = token.token;
+              record.service.tempArea.token = token.token.replace("&token=", "").replace("token=", "");
               index = 0;
               urlParams = "";
               urlParamArray.forEach((param) => {
@@ -471,7 +469,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               });
 
               record.service.url = urlArray[0] +
-                ((urlParams !== "") ? ("?" + urlParams + "&token=" + token.token) : "?token=" + token.token);
+                ((urlParams !== "") ? ("?" + urlParams + "&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
             }
           });
         });
@@ -716,7 +714,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     // add field filters if required
     url += "&where=" + layer.esriOIDFieldname + "%20IN%20(" + layer.esriOIDValue + ")";
 
-    url += token;
+    url += "&token=" + token;
     let urlRecorddata: Observable<any>;
 
     if (!credentialsRequired) {

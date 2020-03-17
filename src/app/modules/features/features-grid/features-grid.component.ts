@@ -110,10 +110,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
     // get the token if available; else parse it
     this.layerToken = "";
-    this.config.tokenServices.forEach((referer) => {
-      if ((referer.serviceUrl !== undefined) && (referer.serviceUrl !== null) &&
-        (referer.serviceUrl === this.layerServiceUrl)) {
-          this.layerToken = "&token=" + referer.token;
+    this.config.tokenServices.forEach((service) => {
+      if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
+        (service.serviceUrl === this.layerServiceUrl)) {
+          this.layerToken = service.token;
         }
     });
 
@@ -125,7 +125,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         if (urlParamArray.length >= 1) {
           urlParamArray.forEach((value, index) => {
             if (value.startsWith("token=")) {
-              this.layerToken = "&" + value;
+              this.layerToken = value.replace("&token=", "").replace("token=", "");
             }
           });
         }
@@ -258,7 +258,6 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       const formatLyr = (data) => {
         let records = [];
         let rowGeomertyData = {};
-        console.log(data);
 
         let record = {};
         data.model.features.forEach((row) => {
@@ -334,7 +333,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     this.setQueryStatus("", "reset")
 
     // get the layer definition
-    let url = this.layerBaseUrl + "?" + "f=json" + this.layerToken;
+    let url = this.layerBaseUrl + "?" + "f=json" + "&token=" + this.layerToken;
     let urlMetadata: Observable<any>;
 
     this.connectionFailure = true;
@@ -378,7 +377,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           "&where=1%3D1" +
           "&returnGeometry=false" +
           "&returnCountOnly=true" +
-          this.layerToken;
+          "&token=" + this.layerToken;
         let urlRecordCountdata: Observable<any>;
 
         if (!this.credentialsRequired) {
@@ -583,7 +582,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       url += "&where=" + encodeURIComponent("1=1");
     }
 
-    url += this.layerToken;
+    url += "&token=" + this.layerToken;
     let urlRecorddata: Observable<any>;
 
     if (!this.credentialsRequired) {

@@ -472,6 +472,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               if (record.service.tempArea.token !== "") {
                 record.service.url += ((urlParams !== "") ? ("&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
               }
+
+              // do a info query on the layer to check availability
             }
           });
         });
@@ -716,7 +718,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     // add field filters if required
     url += "&where=" + layer.esriOIDFieldname + "%20IN%20(" + layer.esriOIDValue + ")";
 
-    url += "&token=" + token;
+    if ((token !== undefined) && (token !== null) && (token !== "")) {
+      url += "&token=" + token;
+    }
     let urlRecorddata: Observable<any>;
 
     if (!credentialsRequired) {

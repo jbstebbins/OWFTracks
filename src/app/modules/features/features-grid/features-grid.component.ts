@@ -330,10 +330,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   private getLayerInfo() {
-    this.setQueryStatus("", "reset")
+    this.setQueryStatus("retrieving layer info...")
 
     // get the layer definition
-    let url = this.layerBaseUrl + "?" + "f=json" + "&token=" + this.layerToken;
+    let url = this.layerBaseUrl + "?" + "f=json";
+    if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+      url += "&token=" + this.layerToken;
+    }
     let urlMetadata: Observable<any>;
 
     this.connectionFailure = true;
@@ -355,7 +358,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
 
     // handle error
     let urlMetadataSubscription = urlMetadata.subscribe(
-      response => {
+      (response) => {
         this.connectionFailure = false;
 
         this.layerFields = response.fields;
@@ -376,8 +379,11 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         let url = this.layerBaseUrl + "/query?" + "f=json" +
           "&where=1%3D1" +
           "&returnGeometry=false" +
-          "&returnCountOnly=true" +
-          "&token=" + this.layerToken;
+          "&returnCountOnly=true";
+
+        if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+          url += "&token=" + this.layerToken;
+        }
         let urlRecordCountdata: Observable<any>;
 
         if (!this.credentialsRequired) {
@@ -410,26 +416,31 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
             }
           });
 
+          this.setQueryStatus("retrieving layer data...")
           this.retrieveLayerData();
         });
       },
-      error => console.log('HTTP Error', error),
+      error => {
+        console.log('HTTP Error', error);
+        this.setQueryStatus("feature error/" + error, "error")
+      },
       () => {
         if (!this.connectionFailure) {
           //console.log('HTTP request completed.');
+          this.setQueryStatus("", "reset");
         } else if (!this.credentialsRequired) {
           this.credentialsRequired = true;
           this.getLayerInfo();
         } else {
           this.setQueryStatus("query features...", "error")
-          window.alert('Search Widget: HTTP other layer error; not trapped.\n' +
+          window.alert('OPS Track Widget: HTTP other layer error; not trapped.\n' +
             this.layerBaseUrl);
         }
       });
   }
 
   private createColumnDefs() {
-    this.setQueryStatus("", "reset")
+    this.setQueryStatus("creating grid columns...", "info")
 
     if (this.layerFields) {
       this.columnDefinitions = [];
@@ -500,6 +511,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         value: { fields: fieldList, id: this.layerIDField, title: this.layerTitleField }
       });
 
+      this.setQueryStatus("", "reset");
       return this.columnDefinitions;
     } else {
       this.setQueryStatus("error", "no field information received; check token!")
@@ -582,9 +594,12 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       url += "&where=" + encodeURIComponent("1=1");
     }
 
-    url += "&token=" + this.layerToken;
+    if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+      url += "&token=" + this.layerToken;
+    }
     let urlRecorddata: Observable<any>;
 
+    this.connectionFailure = true;
     if (!this.credentialsRequired) {
       urlRecorddata = this.http
         .get<any>(url, { responseType: 'json' })
@@ -601,10 +616,12 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           tap(console.log));
     }
 
-    let urlRecordSubscription = urlRecorddata.subscribe(model => {
+    let urlRecordSubscription = urlRecorddata.subscribe((model) => {
       urlRecordSubscription.unsubscribe();
 
+      this.connectionFailure = false;
       this.setQueryStatus("data received, processing...");
+
       // send notification to parent that partial result was returned
       if (model.features) {
         let recordCount = model.features.length;
@@ -623,6 +640,23 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       } else {
         this.setQueryStatus("data received, error... /code-" + model.error.code + "/" + model.error.message, "error");
         alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
+      }
+    },
+    error => {
+      console.log('HTTP Error', error);
+      this.setQueryStatus("query error/" + error, "error")
+    },
+    () => {
+      if (!this.connectionFailure) {
+        //console.log('HTTP request completed.');
+        this.setQueryStatus("", "reset");
+      } else if (!this.credentialsRequired) {
+        this.credentialsRequired = true;
+        this.getLayerInfo();
+      } else {
+        this.setQueryStatus("query feature data...", "error")
+        window.alert('OPS Tracks Widget: HTTP other layer error; not trapped.\n' +
+          this.layerBaseUrl);
       }
     });
   }

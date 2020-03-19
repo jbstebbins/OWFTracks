@@ -327,6 +327,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       }
     }
 
+    // load directory if provided
+    this.getDirectoryLayers();
+
     // subscribe to catalog/map integration
     this.mapFeaturePlotUrl = this.mapMessageService.getMapFeaturePlotUrl().subscribe(
       message => {
@@ -336,6 +339,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           layerDefinition["uuid"] = this.jsutils.uuidv4();
           layerDefinition.tempArea = {};
 
+          // add the new item
+          let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
+
           // skip self-adding of layers
           if ((layerDefinition.overlayId !== "LYR-WatchList") &&
             (layerDefinition.overlayId !== "TMP-WatchList") &&
@@ -343,36 +349,21 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             (layerDefinition.overlayId !== "TMP-Locator")) {
             // check for duplication
             let duplicate = false;
-            this.layers.forEach((value, index) => {
-              if (value.title === (layerDefinition.name + "/" + layerDefinition.overlayId)) {
+            this.layersDefinition.forEach((layer) => {
+              if (layer.url === layerDefinition.url) {
                 duplicate = true;
-                console.log("duplicate layer - " + value.title + "/prior layer replaced.");
+                console.log("duplicate layer - " + layer.title + "/layer ignored.");
               }
             });
 
             // if duplicate, remove old item
-            if (duplicate) {
-              //this.selectedLayer({ originalEvent: null, value: this.layerSelected });
-              this.layersDefinition.forEach((layer) => {
-                if ((layer.overlayId === layerDefinition.overlayId) && (layer.name === layerDefinition.name)) {
-                  duplicate = true;
-
-                  if (layer.url !== layerDefinition.url) {
-                    layer.url = layerDefinition.url;
-                    layer.params = layerDefinition.params;
-
-                    this.layerSelected = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layer.uuid };
-                    this._zone.run(() => {
-                      this.selectedLayer({ originalEvent: null, value: this.layerSelected });
-                    });
-                  }
+            if (!duplicate) {
+              // check if newitem name exists in layer; then change the title
+              this.layers.forEach((layer) => {
+                if (layer.title === newItem.title) {
+                  newItem.title = (layerDefinition.name + "/" + layerDefinition.overlayId + "_2");
                 }
               });
-            }
-
-            if (!duplicate) {
-              // add the new item
-              let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
 
               // trigger angular binding
               this.layers = [...this.layers, newItem];
@@ -420,14 +411,11 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   private getDirectoryLayers() {
-    console.log(this.config);
     let selectedLayer;
     this.connectionFailure = true;
     this.config.directories.forEach((directory) => {
-      console.log(directory);
-
       let directoryObserable: Observable<any> = this.http
-        .get<any>(directory, { responseType: 'json', withCredentials: true })
+        .get<any>(directory.path, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
           catchError(this.handleError),
@@ -438,19 +426,18 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           this.connectionFailure = false;
           directorySubscription.unsubscribe();
 
-          directoryCollection.forEach((services) => {
-            console.log(services);
-
+          directoryCollection.directory.forEach((services) => {
             // retrieve the directory and get layer list
             let layerType = "feature";
-            let layerParams = this.config.layerParam.Defaults;
+            let layerParams = this.config.layerParam.defaults;
             let layerUrl = "";
             let layerMSG, newItem;
             let urlParser, layerHost = "";
             services.layer.services.forEach((service) => {
-              console.log(service);
-              
-              layerType = service.params.serviceType || services.layer.params || "feature";
+              service["uuid"] = this.jsutils.uuidv4();
+              service.tempArea = {};
+
+              layerType = service.params.serviceType || services.layer.params.serviceType || "feature";
               if (layerType === "feature") {
                 layerType = "arcgis-feature";
 
@@ -458,15 +445,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
                 // copy layer params from top level
                 if (services.layer.params) {
-                  services.layer.params.array.forEach((param) => {
+                  Object.keys(services.layer.params).forEach((param) => {
                     layerParams[param] = services.layer.params[param];
                   });
                 }
 
                 // copy layer service params
-                if (service.layer.params) {
-                  service.layer.params.array.forEach((param) => {
-                    layerParams[param] = service.layer.params[param];
+                if (service.params) {
+                  Object.keys(service.params).forEach((param) => {
+                    layerParams[param] = service.params[param];
                   });
                 }
 
@@ -480,13 +467,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                 delete layerParams.intranet;
 
                 // copy the default overrides
-                if (this.config.layerParam.Overrides) {
-                  this.config.layerParam.Overrides.array.forEach((param) => {
-                    layerParams[param] = this.config.layerParam.Overrides[param];
+                if (this.config.layerParam.overrides) {
+                  Object.keys(this.config.layerParam.overrides).forEach((param) => {
+                    layerParams[param] = this.config.layerParam.overrides[param];
                   });
                 }
 
-                // updatee service url
+                // update service url
                 layerUrl = service.url || services.properties.url;
                 if ((service.params.layers !== undefined) && (service.params.layers !== null)) {
                   layerUrl = layerUrl +
@@ -511,7 +498,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
                 // create the service message for layerDefinition
                 layerMSG = {};
-                layerMSG.overlayId = directory.properties.category;
+                layerMSG.overlayId = directory.name;
                 layerMSG.featureId = service.name;
                 layerMSG.name = service.name;
                 layerMSG.format = layerType;
@@ -522,7 +509,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
                 layerMSG.mapId = 1;
                 layerMSG.url = layerUrl;
-                layerMSG["uuid"] = this.jsutils.uuidv4();
+                layerMSG["uuid"] = service["uuid"];
+                layerMSG.tempArea = {};
 
                 // check roles to for command set option in infotemplate
 
@@ -538,6 +526,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               }
             });
           });
+
+          // save the list to memory store
+          this.configService.setMemoryValue("layers", this.layers);
+          this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
+
+          // activate the first layer
+          this.layerSelected = selectedLayer;
+          this.selectedLayer({ originalEvent: null, value: this.layerSelected });
         },
         error => {
           console.log('HTTP Error', error);
@@ -551,14 +547,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           }
         });
     });
-
-    // save the list to memory store
-    this.configService.setMemoryValue("layers", this.layers);
-    this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
-
-    // activate the first layer
-    this.layerSelected = selectedLayer;
-    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
   }
 
   private createColumnDefs() {
@@ -597,6 +585,12 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             if (record.service.url.includes(token.serviceUrl)) {
               urlArray = record.service.url.split("?");
               urlParamArray = urlArray[1].split("&");
+
+              if ((record.service.tempArea === undefined) || (record.service.tempArea === null)) {
+                record.service.tempArea = {};
+                record.service.tempArea.baseUrl = urlArray[0];
+                record.service.tempArea.credentialsRequired = false;
+              }
 
               record.service.tempArea.token = token.token.replace("&token=", "").replace("token=", "");
               index = 0;
@@ -648,7 +642,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   searchListener($event: any): void {
     if ($event.key === "Enter") {
-      this.searchValue = $event.target.value;
+      this.searchValue = ($event.target.value + "").trim();
+      
       this.notificationService.publisherAction({
         action: 'LYR SEARCH VALUE',
         value: { field: this.layerFieldSelected.title, value: this.searchValue }
@@ -814,6 +809,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           "mapId": 1,
           "url": value.service.url
         }
+        
         plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
 
         plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });

@@ -148,7 +148,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   searchListener($event: any): void {
     if ($event.key === "Enter") {
-      this.searchValue = $event.target.value;
+      this.searchValue = ($event.target.value + "").trim();
       this.notificationService.publisherAction({ action: 'CSV SEARCH VALUE', value: this.searchValue });
     }
   }

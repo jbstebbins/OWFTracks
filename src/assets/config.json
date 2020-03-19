@@ -24,16 +24,18 @@
       "opacity": "0.35",
       "transparent": "true",
       "useProxy": "false"
-    },
-    "overrides": {
-      "refreshInterval": "0.10",
-      "opacity": "1.0",
-      "mode": "snapshot"
     }
   },
   "directories": [{
     "name": "TRACKS",
-    "path": "/GlobalRepo/Catalogs/tracks.directory"
+    "path": "/GlobalRepo/Catalogs/tracks.directory",
+    "layerParam": {
+      "overrides": {
+        "refreshInterval": "0.03",
+        "opacity": "1.0",
+        "mode": "ondemand"
+      }
+    }
   }],
   "tokenServices": [{
       "serviceUrl": "c3c-ap101-mc-01.maincgtest.adscgtest.uscg.mil:6443",

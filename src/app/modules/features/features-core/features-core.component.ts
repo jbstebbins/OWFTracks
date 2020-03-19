@@ -83,6 +83,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   gridRefreshImageSrc = "/OWFTracks/assets/images/layer-show.png";
   searchText = "";
 
+  layersPublished: boolean = false;
   layerFields: any[] = [];
   layerFieldSelected: Track;
   layerFieldsId: string;
@@ -196,6 +197,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             action: 'LYR MAP REFRESHED',
             value: { field: 'mapExtent', value: this.mapView }
           });
+
+          // refresh the map layers
+          this.publishLayers();
         }
       });
 
@@ -467,9 +471,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                 delete layerParams.intranet;
 
                 // copy the default overrides
-                if (this.config.layerParam.overrides) {
-                  Object.keys(this.config.layerParam.overrides).forEach((param) => {
-                    layerParams[param] = this.config.layerParam.overrides[param];
+                if (directory.layerParam.overrides) {
+                  Object.keys(directory.layerParam.overrides).forEach((param) => {
+                    layerParams[param] = directory.layerParam.overrides[param];
                   });
                 }
 
@@ -643,7 +647,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   searchListener($event: any): void {
     if ($event.key === "Enter") {
       this.searchValue = ($event.target.value + "").trim();
-
+      
       this.notificationService.publisherAction({
         action: 'LYR SEARCH VALUE',
         value: { field: this.layerFieldSelected.title, value: this.searchValue }
@@ -716,10 +720,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     });
 
     if (!duplicateRow) {
+      // store and allow user to view
       let records = [...this.rowDataMonitor, newItem];
       this.rowDataMonitor = records;
 
-      //this.publishLayers();
       this.divRefreshCss["background-color"] = "red";
     } else {
       console.log("duplicate row, skipping.");
@@ -764,87 +768,80 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       this.rowDataMonitor = records;
     }
 
-    //this.publishLayers();
     this.divRefreshCss["background-color"] = "red";
   }
 
-  publishLayers() {
-    // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
-    let services = {};
-    let service;
+  publishLayers(event?) {
+    if ((event !== undefined) && (event !== null)) {
+      this.layersPublished = true;
+    }
 
-    // remove existing overlay 
-    if ((this.divRefreshCss["background-color"] === "gray") ||
-      (this.divRefreshCss["background-color"] === "red") ||
-      (this.divRefreshCss["background-color"] === "green")) {
-      this.divRefreshCss["background-color"] = "orange";
-      this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
+    if (this.layersPublished) {
+      // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
+      let services = {};
+      let service;
 
-      this.rowDataMonitor.forEach((row, index) => {
-        if (services[row.service.uuid] === undefined) {
-          service = {
-            service: row.service,
-            esriOIDFieldname: row.esriOIDFieldname,
-            idList: [row.esriOIDValue]
+      // remove existing overlay 
+      if ((this.divRefreshCss["background-color"] === "gray") ||
+        (this.divRefreshCss["background-color"] === "red") ||
+        (this.divRefreshCss["background-color"] === "green")) {
+        this.divRefreshCss["background-color"] = "orange";
+        this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
+
+        this.rowDataMonitor.forEach((row, index) => {
+          if (services[row.service.uuid] === undefined) {
+            service = {
+              service: row.service,
+              esriOIDFieldname: row.esriOIDFieldname,
+              idList: [row.esriOIDValue]
+            }
+
+            services[row.service.uuid] = service;
+          } else {
+            services[row.service.uuid].idList.push(row.esriOIDValue);
           }
+        });
 
-          services[row.service.uuid] = service;
-        } else {
-          services[row.service.uuid].idList.push(row.esriOIDValue);
-        }
-      });
+        let plotMessageQueue = [];
+        let plotMessage: any = {};
+        let value;
+        Object.keys(services).forEach((layer) => {
+          value = services[layer];
 
-      let plotMessageQueue = [];
-      let plotMessage: any = {};
-      let value;
-      Object.keys(services).forEach((layer) => {
-        value = services[layer];
-
-        plotMessage = {
-          "overlayId": "LYR-WatchList",
-          "featureId": "LYR-WatchList_" + value.service.featureId,
-          "name": value.service.name,
-          "format": "arcgis-feature",
-          "params": value.service.params,
-          "mapId": 1,
-          "url": value.service.url
-        }
-
-        if (plotMessage.url.includes("?")) {
-          plotMessage.url += "&spatialRel=esriSpatialRelIntersects" +
-            "&geometry=" +
-            "&geometryType=" +
-            "&inSR="
-        } else {
-          plotMessage.url += "?spatialRel=esriSpatialRelIntersects" +
-            "&geometry=" +
-            "&geometryType=" +
-            "&inSR="
-        }
-        plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
-
-        plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
-      });
-
-      // process the queue on timer
-      let queueInterval = setInterval(() => {
-        if (plotMessageQueue.length === 0) {
-          clearInterval(queueInterval);
-          this.divRefreshCss["background-color"] = "green";
-        } else {
-          let queueItem = plotMessageQueue.splice(0, 1);
-          if (queueItem.length > 0) {
-            this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
+          plotMessage = {
+            "overlayId": "LYR-WatchList",
+            "featureId": "LYR-WatchList_" + value.service.featureId,
+            "name": value.service.name,
+            "format": "arcgis-feature",
+            "params": value.service.params,
+            "mapId": 1,
+            "url": value.service.url
           }
-        }
-      }, 1000);
+          
+          plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
+          plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
+        });
 
-      // save the current state of the active list
-      let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
-        "active.state", this.rowDataMonitor);
-      let saveSettings = saveSettingsObservable.subscribe(model => {
-        saveSettings.unsubscribe();
-      });
+        // process the queue on timer
+        let queueInterval = setInterval(() => {
+          if (plotMessageQueue.length === 0) {
+            clearInterval(queueInterval);
+            this.divRefreshCss["background-color"] = "green";
+          } else {
+            let queueItem = plotMessageQueue.splice(0, 1);
+            if (queueItem.length > 0) {
+              this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
+            }
+          }
+        }, 500);
+
+        // save the current state of the active list
+        let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
+          "active.state", this.rowDataMonitor);
+        let saveSettings = saveSettingsObservable.subscribe(model => {
+          saveSettings.unsubscribe();
+        });
+      }
     }
   }
 
@@ -855,7 +852,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let token = layer.service.tempArea.token;
 
     // retrieve the record count
-    // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
     let url = baseUrl + "/query?" + "f=json" +
       "&returnGeometry=true" +
       "&returnQueryGeometry=true" +
@@ -865,10 +861,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       //"&resultOffset=" + this.layerOffset +
       //"&resultRecordCount=" + this.layerMaxRecords +
       "&outSR=4326" +
-      "&spatialRel=esriSpatialRelIntersects" +
-      "&geometry=" +
-      "&geometryType=" +
-      "&inSR=";
+      "&spatialRel=esriSpatialRelIntersects";
 
     // add field filters if required
     url += "&where=" + layer.esriOIDFieldname + "%20IN%20(" + layer.esriOIDValue + ")";

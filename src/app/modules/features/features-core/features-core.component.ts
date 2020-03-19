@@ -43,6 +43,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   owfApi = new OwfApi();
   worker: LyrToKmlWorker;
 
+  credentialsRequired: boolean = false;
+  connectionFailure: boolean = false;
+
   mapView: any;
   extent: any = "-3.108922936594193,-147.85116261717408," +
     "61.631880192109456,-62.06991261719688";
@@ -253,8 +256,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
           let ringsArray = data.geometry.rings;
           let ringArray = [];
+          let ringsArrayLength = ringsArray.length;
           kmlPayload += "<Polygon>";
-          for (let i = 0; i < ringsArray.length; i++) {
+          for (let i = 0; i < ringsArrayLength; i++) {
             if (i === 0) {
               kmlPayload += "<outerBoundaryIs><LinearRing><coordinates>";
               ringArray = ringsArray[i];
@@ -415,6 +419,148 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getDirectoryLayers() {
+    console.log(this.config);
+    let selectedLayer;
+    this.connectionFailure = true;
+    this.config.directories.forEach((directory) => {
+      console.log(directory);
+
+      let directoryObserable: Observable<any> = this.http
+        .get<any>(directory, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError),
+          tap(console.log));
+
+      let directorySubscription = directoryObserable.subscribe(
+        (directoryCollection) => {
+          this.connectionFailure = false;
+          directorySubscription.unsubscribe();
+
+          directoryCollection.forEach((services) => {
+            console.log(services);
+
+            // retrieve the directory and get layer list
+            let layerType = "feature";
+            let layerParams = this.config.layerParam.Defaults;
+            let layerUrl = "";
+            let layerMSG, newItem;
+            let urlParser, layerHost = "";
+            services.layer.services.forEach((service) => {
+              console.log(service);
+              
+              layerType = service.params.serviceType || services.layer.params || "feature";
+              if (layerType === "feature") {
+                layerType = "arcgis-feature";
+
+                // process the layer into definition
+
+                // copy layer params from top level
+                if (services.layer.params) {
+                  services.layer.params.array.forEach((param) => {
+                    layerParams[param] = services.layer.params[param];
+                  });
+                }
+
+                // copy layer service params
+                if (service.layer.params) {
+                  service.layer.params.array.forEach((param) => {
+                    layerParams[param] = service.layer.params[param];
+                  });
+                }
+
+                // cleanup params
+                delete layerParams.serviceType;
+                delete layerParams.url;
+                delete layerParams.data;
+                delete layerParams.zoom;
+                delete layerParams.refresh;
+                delete layerParams._comment;
+                delete layerParams.intranet;
+
+                // copy the default overrides
+                if (this.config.layerParam.Overrides) {
+                  this.config.layerParam.Overrides.array.forEach((param) => {
+                    layerParams[param] = this.config.layerParam.Overrides[param];
+                  });
+                }
+
+                // updatee service url
+                layerUrl = service.url || services.properties.url;
+                if ((service.params.layers !== undefined) && (service.params.layers !== null)) {
+                  layerUrl = layerUrl +
+                    ((layerUrl.endsWith("/")) ? "" : "/") + service.params.layers;
+                }
+                if ((services.properties.token !== undefined) && (services.properties.token !== null)) {
+                  urlParser = new URL(layerUrl);
+                  layerHost = urlParser.host;
+
+                  // get the token if available; else parse it
+                  this.config.tokenServices.forEach((service) => {
+                    if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
+                      (service.serviceUrl === layerHost)) {
+                      if (layerUrl.includes("?")) {
+                        layerUrl += "&token=" + service.token;
+                      } else {
+                        layerUrl += "?token=" + service.token;
+                      }
+                    }
+                  });
+                }
+
+                // create the service message for layerDefinition
+                layerMSG = {};
+                layerMSG.overlayId = directory.properties.category;
+                layerMSG.featureId = service.name;
+                layerMSG.name = service.name;
+                layerMSG.format = layerType;
+                layerMSG.params = layerParams;
+                if ((service.params.zoom !== undefined) || (service.params.zoom !== null)) {
+                  layerMSG.zoom = service.params.zoom;
+                }
+
+                layerMSG.mapId = 1;
+                layerMSG.url = layerUrl;
+                layerMSG["uuid"] = this.jsutils.uuidv4();
+
+                // check roles to for command set option in infotemplate
+
+                // add the new item
+                newItem = { title: (layerMSG.name + "/" + layerMSG.overlayId), uuid: service.uuid };
+                if (!selectedLayer) {
+                  selectedLayer = newItem;
+                }
+
+                // trigger angular binding
+                this.layers = [...this.layers, newItem];
+                this.layersDefinition = [...this.layersDefinition, layerMSG];
+              }
+            });
+          });
+        },
+        error => {
+          console.log('HTTP Error', error);
+        },
+        () => {
+          if (!this.connectionFailure) {
+            //console.log('HTTP request completed.');
+          } else {
+            window.alert('OPS Track Widget: HTTP other layer error; not trapped.\n' +
+              directory);
+          }
+        });
+    });
+
+    // save the list to memory store
+    this.configService.setMemoryValue("layers", this.layers);
+    this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
+
+    // activate the first layer
+    this.layerSelected = selectedLayer;
+    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+  }
+
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
@@ -472,8 +618,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               if (record.service.tempArea.token !== "") {
                 record.service.url += ((urlParams !== "") ? ("&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
               }
-
-              // do a info query on the layer to check availability
             }
           });
         });

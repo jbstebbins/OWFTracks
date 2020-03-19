@@ -1,6 +1,6 @@
 {
-	"version": "1.1.1226",
-	"buildDate": "20200312",
+	"version": "1.1.1328",
+	"buildDate": "20200318",
 	"Urls": {
 		"baseUrl": "/OWFTracks",
 		"refreshRate": "5000",
@@ -11,15 +11,36 @@
 		"cotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
 		"cotServiceDev1": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
 		"cotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
-		"cotServerLocal": "/OWFTracks-1.1.1226/assets/testdata/testfile.json"
+		"cotServerLocal": "/assets/testdata/testfile.json"
 	},
 	"mapInterface": "enabled",
-	"directories": ["/GlobalRepo/Catalogs/tracks.directory"],
-	"tokenServices": [{
-		"serviceUrl": "c3c-ap101-mc-01.maincgtest.adscgtest.uscg.mil:6443",
-		"token": "ZfH6BcMbWJTs3AJNw-bNAnpGzO-ZDTperUqq0Mw0YUzvUvN8TbImdYLGLuffnHQ4PHYG3axDVD2gXxyn4HeFXCAL1Un-TusVT_XhtKUUP9JM7Dbf573uEfrCVNN1nsb6"
-	}, {
-		"url": "/GlobalRepo/Catalogs/tracks-iocwk.token"
-	}],
-	"roles": ["role1", "role2"]
+	"layerParam": {
+		"defaults": {
+			"serviceType": "feature",
+			"format": "image/png",
+			"refreshInterval": "30",
+			"zoom": "false",
+			"showLabels": "false",
+			"opacity": "0.35",
+			"transparent": "true",
+			"useProxy": "false"
+			},
+		"overrides": {
+			"refreshInterval": "0.10",
+			"opacity": "1.0",
+			"mode": "ondemand"
+			}
+	},
+	"directories": [
+		"/GlobalRepo/Catalogs/tracks.directory"
+	],
+	"tokenServices": [
+		{
+			"serviceUrl": "c3c-ap101-mc-01.maincgtest.adscgtest.uscg.mil:6443",
+			"token": "ZfH6BcMbWJTs3AJNw-bNAnpGzO-ZDTperUqq0Mw0YUzvUvN8TbImdYLGLuffnHQ4PHYG3axDVD2gXxyn4HeFXCAL1Un-TusVT_XhtKUUP9JM7Dbf573uEfrCVNN1nsb6"
+		},
+		{
+			"url": "/GlobalRepo/Catalogs/tracks-iocwk.token"
+		}
+	]
 }

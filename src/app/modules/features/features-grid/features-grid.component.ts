@@ -377,6 +377,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         };
 
         // retrieve the record count
+        // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
         let url = this.layerBaseUrl + "/query?" + "f=json" +
           "&where=1%3D1" +
           "&returnGeometry=false" +
@@ -551,6 +552,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   retrieveLayerData(field?, value?) {
     // retrieve the record count
     this.setQueryStatus("data query...");
+
+    // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
     let url = this.layerBaseUrl + "/query?" + "f=json" +
       "&returnGeometry=true" +
       "&returnQueryGeometry=true" +

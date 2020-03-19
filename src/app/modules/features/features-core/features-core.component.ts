@@ -643,7 +643,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   searchListener($event: any): void {
     if ($event.key === "Enter") {
       this.searchValue = ($event.target.value + "").trim();
-      
+
       this.notificationService.publisherAction({
         action: 'LYR SEARCH VALUE',
         value: { field: this.layerFieldSelected.title, value: this.searchValue }
@@ -809,7 +809,18 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           "mapId": 1,
           "url": value.service.url
         }
-        
+
+        if (plotMessage.url.includes("?")) {
+          plotMessage.url += "&spatialRel=esriSpatialRelIntersects" +
+            "&geometry=" +
+            "&geometryType=" +
+            "&inSR="
+        } else {
+          plotMessage.url += "?spatialRel=esriSpatialRelIntersects" +
+            "&geometry=" +
+            "&geometryType=" +
+            "&inSR="
+        }
         plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
 
         plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
@@ -844,6 +855,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let token = layer.service.tempArea.token;
 
     // retrieve the record count
+    // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
     let url = baseUrl + "/query?" + "f=json" +
       "&returnGeometry=true" +
       "&returnQueryGeometry=true" +
@@ -853,7 +865,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       //"&resultOffset=" + this.layerOffset +
       //"&resultRecordCount=" + this.layerMaxRecords +
       "&outSR=4326" +
-      "&spatialRel=esriSpatialRelIntersects";
+      "&spatialRel=esriSpatialRelIntersects" +
+      "&geometry=" +
+      "&geometryType=" +
+      "&inSR=";
 
     // add field filters if required
     url += "&where=" + layer.esriOIDFieldname + "%20IN%20(" + layer.esriOIDValue + ")";

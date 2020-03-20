@@ -44,7 +44,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   searchValue: string = "";
   rowHeaders: any[] = [];
   rowData: any[] = [];
-  columnTracking: any[] = [];
+  columnTracking: any[] = [-1, -1, -1];
   filterActive: boolean = false;
 
   domLayout = "normal";
@@ -105,7 +105,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           this.worker.postMessage({
             overlayId: "CSV-Viewer",
             filename: this.parentFileName, tracks: tracks,
-            showLabels: payload.value.showLabels, color: payload.value.color, 
+            showLabels: payload.value.showLabels, color: payload.value.color,
             columnTracking: this.columnTracking
           });
         }
@@ -160,11 +160,21 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
         // format and return to main thread
         let kmlPayload = "";
+        let coords, lonX, latY;
         data.tracks.forEach(track => {
+          // check if geom is provided
+          if (data.columnTracking[2] === data.columnTracking[1]) {
+            coords = track[data.columnTracking[1]].replace("POINT(", "").replace(")", "").split(" ");
+            lonX = coords[0];
+            latY = coords[1];
+          } else {
+            lonX = track[data.columnTracking[2]];
+            latY = track[data.columnTracking[1]];
+          }
           kmlPayload += "<Placemark> " +
             "<name>" + track[data.columnTracking[0]] + "</name> " +
             "<styleUrl>#csv_style</styleUrl> " +
-            "<Point><coordinates>" + track[data.columnTracking[2]] + "," + track[data.columnTracking[1]] + ",0" + "</coordinates></Point> ";
+            "<Point><coordinates>" + lonX + "," + latY + ",0" + "</coordinates></Point> ";
 
           kmlPayload += "<ExtendedData>";
           Object.keys(track).forEach((key, index) => {
@@ -233,8 +243,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       let index = 0;
       let header = this.parentData[0];
 
-      let titleIndex = "", latIndex = "", lonIndex = "";
-      let itemTemp = "";
+      let titleIndex = -1, latIndex = -1, lonIndex = -1;
+      let itemTemp = "", geom;
       header.forEach((item) => {
         if (index < 50) {
           item = item.replace(/[^0-9a-z -_]/gi, '').substring(0, 20);
@@ -249,13 +259,18 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
           // set column tracking for parsing
           if (((itemTemp === "title") || (itemTemp === "name")) &&
-            (titleIndex === "")) {
+            (titleIndex === -1)) {
             titleIndex = item;
-          } else if (((itemTemp === "latitude") || (itemTemp === "lat")) &&
-            (latIndex === "")) {
+          } else if (((itemTemp === "latitude") || (itemTemp === "lat") ||
+            (itemTemp === "coordy") || (itemTemp === "pointy") || (itemTemp === "y")) &&
+            (latIndex === -1)) {
             latIndex = item;
-          } else if (((itemTemp === "longitude") || (itemTemp === "lon")) &&
-            (lonIndex === "")) {
+          } else if (((itemTemp === "longitude") || (itemTemp === "lon") ||
+            (itemTemp === "coordx") || (itemTemp === "pointx") || (itemTemp === "x")) &&
+            (lonIndex === -1)) {
+            lonIndex = item;
+          } else if (itemTemp === "geom") {
+            latIndex = item;
             lonIndex = item;
           }
         }
@@ -321,7 +336,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           record[header] = value[index++];
 
           // convert lat/lon if needed
-          if ((header === this.columnTracking[1]) || (header === this.columnTracking[2])) {
+          if ((this.columnTracking[1] !== this.columnTracking[2]) &&
+            ((header === this.columnTracking[1]) || (header === this.columnTracking[2]))) {
             coordinates = record[header] + "";
             count = this.jsutils.countChars(coordinates, " ");
 
@@ -350,26 +366,30 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   }
 
   onRowClicked() {
-    var selectedRows = this.gridApi.getSelectedRows();
+    if ((this.columnTracking[0] === -1) ||
+      (this.columnTracking[1] === -1) || (this.columnTracking[2] === -1)) {
+    } else {
+      var selectedRows = this.gridApi.getSelectedRows();
 
-    let tracks;
-    if (selectedRows.length > 0) {
-      tracks = selectedRows;
+      let tracks;
+      if (selectedRows.length > 0) {
+        tracks = selectedRows;
 
-      let track = tracks[0];
-      this.worker.postMessage({
-        overlayId: "TMP-Viewer",
-        filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"),
-        tracks: tracks,
-        color: "#000000", columnTracking: this.columnTracking
-      });
-
-      window.setTimeout(() => {
-        this.owfApi.sendChannelRequest("map.feature.unplot", {
+        let track = tracks[0];
+        this.worker.postMessage({
           overlayId: "TMP-Viewer",
-          featureId: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_")
+          filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"),
+          tracks: tracks,
+          color: "#000000", columnTracking: this.columnTracking
         });
-      }, 5000);
+
+        window.setTimeout(() => {
+          this.owfApi.sendChannelRequest("map.feature.unplot", {
+            overlayId: "TMP-Viewer",
+            featureId: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_")
+          });
+        }, 5000);
+      }
     }
   }
 }

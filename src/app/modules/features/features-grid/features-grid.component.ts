@@ -565,7 +565,9 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       "&outSR=4326";
 
     // bound to map extent
-    if (((field === undefined) || (field === null)) &&
+    if (((field === undefined) || (field === null) || 
+        (value === undefined) || (value === null) ||
+        (field === "") || (value === "")) &&
       (this.parentMapView !== undefined) && (this.parentMapView !== null)) {
       url += "&inSR=4326" +
         "&geometryType=esriGeometryEnvelope" +
@@ -575,7 +577,9 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     }
 
     // add field filters if required
-    if ((field !== undefined) && (value !== undefined)) {
+    if ((field !== undefined) && (field !== null) && 
+        (value !== undefined) && (value !== null) &&
+        (field !== "") && (value !== "")) {
       if (this.columnList[field].type !== "esriFieldTypeString") {
         if (value.charAt(0) === "=") {
           url += "&where=" + field + "+%3D+" + encodeURIComponent("\"" + value.slice(1) + "\"");

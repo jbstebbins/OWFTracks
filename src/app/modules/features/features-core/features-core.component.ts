@@ -422,8 +422,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         .get<any>(directory.path, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
 
       let directorySubscription = directoryObserable.subscribe(
         (directoryCollection) => {
@@ -876,15 +875,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         .get<any>(url, { responseType: 'json' })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     } else {
       urlRecorddata = this.http
         .get<any>(url, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     }
 
     let urlRecordSubscription = urlRecorddata.subscribe(model => {

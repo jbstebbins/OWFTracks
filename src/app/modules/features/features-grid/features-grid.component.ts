@@ -346,15 +346,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         .get<any>(url, { responseType: 'json' })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     } else {
       urlMetadata = this.http
         .get<any>(url, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     }
 
     // handle error
@@ -393,15 +391,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
             .get<any>(url, { responseType: 'json' })
             .pipe(
               retryWhen(errors => errors.pipe(delay(2000), take(2))),
-              catchError(this.handleError),
-              tap(console.log));
+              catchError(this.handleError)/*, tap(console.log)*/);
         } else {
           urlRecordCountdata = this.http
             .get<any>(url, { responseType: 'json', withCredentials: true })
             .pipe(
               retryWhen(errors => errors.pipe(delay(2000), take(2))),
-              catchError(this.handleError),
-              tap(console.log));
+              catchError(this.handleError)/*, tap(console.log)*/);
         }
 
         let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
@@ -613,15 +609,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         .get<any>(url, { responseType: 'json' })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     } else {
       urlRecorddata = this.http
         .get<any>(url, { responseType: 'json', withCredentials: true })
         .pipe(
           retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError),
-          tap(console.log));
+          catchError(this.handleError)/*, tap(console.log)*/);
     }
 
     let urlRecordSubscription = urlRecorddata.subscribe((model) => {

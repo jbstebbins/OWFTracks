@@ -72,11 +72,11 @@ export class AppComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnInit() {
-		console.log("app initialized.");
+		//console.log("app initialized.");
 	}
 
 	ngOnDestroy() {
-		console.log("app destroyed.");
+		//console.log("app destroyed.");
 	}
   
 	notifyMenu() {

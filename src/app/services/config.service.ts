@@ -28,10 +28,9 @@ export class ConfigService {
 
 	private retrieveConfig(): void {
 		this.configObservable = this.http
-			.get<ConfigModel>(this.baseUrl, { responseType: 'json', withCredentials: true })
+			.get<any>(this.baseUrl, { responseType: 'json', withCredentials: true })
 			.pipe(
-				catchError(this.handleError('retrieveConfig', [])),
-				tap(console.log));
+				catchError(this.handleError('retrieveConfig', []))/*, tap(console.log)*/);
 
 		this.configObservable.subscribe(model => {
 			this.configModel = model;
@@ -44,8 +43,7 @@ export class ConfigService {
 					responseList.push(item.url);
 					responseCalls.push(this.http.get<any>(item.url, { responseType: 'json', withCredentials: true })
 						.pipe(
-							catchError(this.handleError('retrieveConfig', [])),
-							tap(console.log)));
+							catchError(this.handleError('retrieveConfig', []))/*, tap(console.log)*/));
 				}
 			});
 

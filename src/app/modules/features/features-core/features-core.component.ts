@@ -929,7 +929,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   searchRefresh($event) {
     this.searchText = "";
-    this.searchListener({ "key": "Enter", "target": { "value": undefined } });
+    this.searchListener({ "key": "Enter", "target": { "value": "" } });
   }
 
   private handleError(error: HttpErrorResponse) {

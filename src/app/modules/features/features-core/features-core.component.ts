@@ -199,7 +199,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           });
 
           // refresh the map layers
-          this.publishLayers();
+          if (this.config.mapInterface.onViewChange === true) {
+            this.publishLayers();
+          }
         }
       });
 
@@ -335,62 +337,64 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.getDirectoryLayers();
 
     // subscribe to catalog/map integration
-    this.mapFeaturePlotUrl = this.mapMessageService.getMapFeaturePlotUrl().subscribe(
-      message => {
-        // only arcgis-feature are accepted
-        if (message.format === "arcgis-feature") {
-          let layerDefinition = message;
-          layerDefinition["uuid"] = this.jsutils.uuidv4();
-          layerDefinition.tempArea = {};
+    if (this.config.mapInterface.onPlot === true) {
+      this.mapFeaturePlotUrl = this.mapMessageService.getMapFeaturePlotUrl().subscribe(
+        message => {
+          // only arcgis-feature are accepted
+          if (message.format === "arcgis-feature") {
+            let layerDefinition = message;
+            layerDefinition["uuid"] = this.jsutils.uuidv4();
+            layerDefinition.tempArea = {};
 
-          // add the new item
-          let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
+            // add the new item
+            let newItem = { title: (layerDefinition.name + "/" + layerDefinition.overlayId), uuid: layerDefinition.uuid };
 
-          // skip self-adding of layers
-          if ((layerDefinition.overlayId !== "LYR-WatchList") &&
-            (layerDefinition.overlayId !== "TMP-WatchList") &&
-            (layerDefinition.overlayId !== "TMP-Viewer") &&
-            (layerDefinition.overlayId !== "TMP-Locator")) {
-            // check for duplication
-            let duplicate = false;
-            this.layersDefinition.forEach((layer) => {
-              if (layer.url === layerDefinition.url) {
-                duplicate = true;
-                console.log("duplicate layer - " + layer.title + "/layer ignored.");
+            // skip self-adding of layers
+            if ((layerDefinition.overlayId !== "LYR-WatchList") &&
+              (layerDefinition.overlayId !== "TMP-WatchList") &&
+              (layerDefinition.overlayId !== "TMP-Viewer") &&
+              (layerDefinition.overlayId !== "TMP-Locator")) {
+              // check for duplication
+              let duplicate = false;
+              this.layersDefinition.forEach((layer) => {
+                if (layer.url === layerDefinition.url) {
+                  duplicate = true;
+                  console.log("duplicate layer - " + layer.title + "/layer ignored.");
+                }
+              });
+
+              // if duplicate, remove old item
+              if (!duplicate) {
+                // check if newitem name exists in layer; then change the title
+                this.layers.forEach((layer) => {
+                  if (layer.title === newItem.title) {
+                    newItem.title = (layerDefinition.name + "/" + layerDefinition.overlayId + "_2");
+                  }
+                });
+
+                // trigger angular binding
+                this.layers = [...this.layers, newItem];
+                this.layersDefinition = [...this.layersDefinition, layerDefinition];
+
+                // save to memory for recall
+                this.configService.setMemoryValue("layers", this.layers);
+                this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
+
+                // if first time
+                this._zone.run(() => {
+                  if (this.layers.length === 1) {
+                    this.selectedLayer({ originalEvent: null, value: newItem });
+                  } else {
+                    this.loadComponent = true;
+                  }
+                });
               }
-            });
-
-            // if duplicate, remove old item
-            if (!duplicate) {
-              // check if newitem name exists in layer; then change the title
-              this.layers.forEach((layer) => {
-                if (layer.title === newItem.title) {
-                  newItem.title = (layerDefinition.name + "/" + layerDefinition.overlayId + "_2");
-                }
-              });
-
-              // trigger angular binding
-              this.layers = [...this.layers, newItem];
-              this.layersDefinition = [...this.layersDefinition, layerDefinition];
-
-              // save to memory for recall
-              this.configService.setMemoryValue("layers", this.layers);
-              this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
-
-              // if first time
-              this._zone.run(() => {
-                if (this.layers.length === 1) {
-                  this.selectedLayer({ originalEvent: null, value: newItem });
-                } else {
-                  this.loadComponent = true;
-                }
-              });
             }
+          } else {
+            console.log("invalid format provided; only arcgis-feature supported");
           }
-        } else {
-          console.log("invalid format provided; only arcgis-feature supported");
-        }
-      });
+        });
+    }
   }
 
   ngOnDestroy() {
@@ -575,55 +579,64 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private updateGridData() {
     // load the last state of the active.state
     let restoreSettingsObservable: Observable<any> = this.preferencesService.getPreference("track.search.filter",
-      "active.state");
+      "active.state.version");
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
       restoreSettings.unsubscribe();
 
-      if (model.value !== undefined) {
-        let records = JSON.parse(model.value);
-        // check all records to make sure they are not in the serviceurl/token list
-        let urlArray = [], urlParamArray = [], urlParams = "", index = 0;
-        this.config.tokenServices.forEach((token) => {
-          records.forEach((record) => {
-            if (record.service.url.includes(token.serviceUrl)) {
-              urlArray = record.service.url.split("?");
-              urlParamArray = urlArray[1].split("&");
+      if ((model.value === undefined) || (model.value === null) || (model.value === "")) {
+      } else {
+        restoreSettingsObservable = this.preferencesService.getPreference("track.search.filter",
+          "active.state");
+        restoreSettings = restoreSettingsObservable.subscribe(model => {
+          restoreSettings.unsubscribe();
 
-              if ((record.service.tempArea === undefined) || (record.service.tempArea === null)) {
-                record.service.tempArea = {};
-                record.service.tempArea.baseUrl = urlArray[0];
-                record.service.tempArea.credentialsRequired = false;
-              }
+          if (model.value !== undefined) {
+            let records = JSON.parse(model.value);
+            // check all records to make sure they are not in the serviceurl/token list
+            let urlArray = [], urlParamArray = [], urlParams = "", index = 0;
+            this.config.tokenServices.forEach((token) => {
+              records.forEach((record) => {
+                if (record.service.url.includes(token.serviceUrl)) {
+                  urlArray = record.service.url.split("?");
+                  urlParamArray = urlArray[1].split("&");
 
-              record.service.tempArea.token = token.token.replace("&token=", "").replace("token=", "");
-              index = 0;
-              urlParams = "";
-              urlParamArray.forEach((param) => {
-                if (param.startsWith("token=")) {
-                } else {
-                  if (index === 0) {
-                    urlParams = param;
-                  } else {
-                    urlParams += "&" + param;
+                  if ((record.service.tempArea === undefined) || (record.service.tempArea === null)) {
+                    record.service.tempArea = {};
+                    record.service.tempArea.baseUrl = urlArray[0];
+                    record.service.tempArea.credentialsRequired = false;
+                  }
+
+                  record.service.tempArea.token = token.token.replace("&token=", "").replace("token=", "");
+                  index = 0;
+                  urlParams = "";
+                  urlParamArray.forEach((param) => {
+                    if (param.startsWith("token=")) {
+                    } else {
+                      if (index === 0) {
+                        urlParams = param;
+                      } else {
+                        urlParams += "&" + param;
+                      }
+                    }
+
+                    index++;
+                  });
+
+                  record.service.url = urlArray[0] + ((urlParams !== "") ? ("?" + urlParams) : "");
+                  if (record.service.tempArea.token !== "") {
+                    record.service.url += ((urlParams !== "") ? ("&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
                   }
                 }
-
-                index++;
               });
+            });
 
-              record.service.url = urlArray[0] + ((urlParams !== "") ? ("?" + urlParams) : "");
-              if (record.service.tempArea.token !== "") {
-                record.service.url += ((urlParams !== "") ? ("&token=" + record.service.tempArea.token) : "?token=" + record.service.tempArea.token);
-              }
+            this.rowDataMonitor = [...records];
+
+            if (records.length > 0) {
+              this.loadStatus = "(no layer selected!/ active list ready!)";
             }
-          });
+          }
         });
-
-        this.rowDataMonitor = [...records];
-
-        if (records.length > 0) {
-          this.loadStatus = "(no layer selected!/ active list ready!)";
-        }
       }
     });
   }
@@ -646,7 +659,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   searchListener($event: any): void {
     if ($event.key === "Enter") {
       this.searchValue = ($event.target.value + "").trim();
-      
+
       this.notificationService.publisherAction({
         action: 'LYR SEARCH VALUE',
         value: { field: this.layerFieldSelected.title, value: this.searchValue }
@@ -778,7 +791,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     if (this.layersPublished) {
       // group the layers by service.overlayId+service.featureId, (esriOIDValue...), esriOIDFieldname
       let services = {};
-      let service;
+      let service, layerId;
 
       // remove existing overlay 
       if ((this.divRefreshCss["background-color"] === "gray") ||
@@ -788,16 +801,17 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
 
         this.rowDataMonitor.forEach((row, index) => {
-          if (services[row.service.uuid] === undefined) {
+          layerId = "LYR-WatchList_" + row.service.featureId;
+          if (services[layerId] === undefined) {
             service = {
               service: row.service,
               esriOIDFieldname: row.esriOIDFieldname,
               idList: [row.esriOIDValue]
             }
 
-            services[row.service.uuid] = service;
+            services[layerId] = service;
           } else {
-            services[row.service.uuid].idList.push(row.esriOIDValue);
+            services[layerId].idList.push(row.esriOIDValue);
           }
         });
 
@@ -816,7 +830,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             "mapId": 1,
             "url": value.service.url
           }
-          
+
           plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
           plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
         });
@@ -836,8 +850,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
         // save the current state of the active list
         let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
-          "active.state", this.rowDataMonitor);
+          "active.state.version", this.config.stateVersion);
         let saveSettings = saveSettingsObservable.subscribe(model => {
+          saveSettings.unsubscribe();
+        });
+        saveSettingsObservable = this.preferencesService.setPreference("track.search.filter",
+          "active.state", this.rowDataMonitor);
+        saveSettings = saveSettingsObservable.subscribe(model => {
           saveSettings.unsubscribe();
         });
       }

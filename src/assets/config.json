@@ -13,12 +13,16 @@
     "cotServiceDev2": "https://localhost:8443/CotProviderSVC/rest/cotdummy",
     "cotServerLocal": "/assets/testdata/testfile.json"
   },
-  "mapInterface": "enabled",
+  "mapInterface": {
+    "onPlot": true,
+    "onViewChange": false
+  },
+  "stateVersion": "1.1",
   "layerParam": {
     "defaults": {
       "serviceType": "feature",
       "format": "image/png",
-      "refreshInterval": "30",
+      "refreshInterval": "0.15",
       "zoom": "false",
       "showLabels": "false",
       "opacity": "0.35",

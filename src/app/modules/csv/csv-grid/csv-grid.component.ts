@@ -164,9 +164,15 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         data.tracks.forEach(track => {
           // check if geom is provided
           if (data.columnTracking[2] === data.columnTracking[1]) {
-            coords = track[data.columnTracking[1]].replace("POINT(", "").replace(")", "").split(" ");
-            lonX = coords[0];
-            latY = coords[1];
+            if (track[data.columnTracking[1]].includes(";")) {
+              coords = track[data.columnTracking[1]].replace("POINT(", "").replace(")", "").split(";")
+              lonX = coords[0];
+              latY = coords[1];
+            } else {
+              coords = track[data.columnTracking[1]].replace("POINT(", "").replace(")", "").split(" ");
+              lonX = coords[0];
+              latY = coords[1];
+            }
           } else {
             lonX = track[data.columnTracking[2]];
             latY = track[data.columnTracking[1]];
@@ -258,7 +264,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           });
 
           // set column tracking for parsing
-          if (((itemTemp === "title") || (itemTemp === "name")) &&
+          if ((itemTemp === "title") || (itemTemp === "name")) {
+            titleIndex = item;
+          } else if (((itemTemp.includes("title")) || (itemTemp.includes("name"))) &&
             (titleIndex === -1)) {
             titleIndex = item;
           } else if (((itemTemp === "latitude") || (itemTemp === "lat") ||
@@ -270,6 +278,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             (lonIndex === -1)) {
             lonIndex = item;
           } else if (itemTemp === "geom") {
+            latIndex = item;
+            lonIndex = item;
+          } else if ((itemTemp === "point") || (itemTemp === "x/y") || (itemTemp === "x;y")) {
             latIndex = item;
             lonIndex = item;
           }

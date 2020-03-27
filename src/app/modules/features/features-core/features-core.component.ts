@@ -801,7 +801,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
 
         this.rowDataMonitor.forEach((row, index) => {
-          layerId = "LYR-WatchList_" + row.service.featureId;
+          layerId = "LYR-WatchList-" + row.service.featureId.replace(/[^a-zA-Z0-9]/g, "");
           if (services[layerId] === undefined) {
             service = {
               service: row.service,
@@ -823,7 +823,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
           plotMessage = {
             "overlayId": "LYR-WatchList",
-            "featureId": "LYR-WatchList_" + value.service.featureId,
+            "featureId": layer,
             "name": value.service.name,
             "format": "arcgis-feature",
             "params": value.service.params,
@@ -846,7 +846,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
               this.owfApi.sendChannelRequest(queueItem[0].channel, queueItem[0].message);
             }
           }
-        }, 500);
+        }, 1500);
 
         // save the current state of the active list
         let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",

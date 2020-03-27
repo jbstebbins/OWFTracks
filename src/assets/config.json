@@ -1,5 +1,5 @@
 {
-  "version": "1.1.1328",
+  "version": "1.1.1357",
   "buildDate": "20200318",
   "Urls": {
     "baseUrl": "/OWFTracks",
@@ -35,7 +35,7 @@
     "path": "/GlobalRepo/Catalogs/tracks.directory",
     "layerParam": {
       "overrides": {
-        "refreshInterval": "0.03",
+        "refreshInterval": "0.10",
         "opacity": "1.0",
         "mode": "ondemand"
       }

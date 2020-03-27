@@ -832,7 +832,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           }
 
           plotMessage.params["definitionExpression"] = value.esriOIDFieldname + " IN (" + value.idList.join() + ")";
-          plotMessageQueue.push({ channel: "map.feature.plot.url", message: plotMessage });
+          plotMessageQueue.push({ channel: "map.feature.plot.url", message: JSON.parse(JSON.stringify(plotMessage)) });
         });
 
         // process the queue on timer

@@ -61,7 +61,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   loadGrid: boolean = false;
 
   domLayout = "normal";
-  rowSelection = "single";
+  rowSelection = "multiple";
 
   rowData: any[] = [];
   rowGeomertyData: {};

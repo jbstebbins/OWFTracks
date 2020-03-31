@@ -11,6 +11,7 @@ import { PanelModule } from 'primeng/panel';
 import { ColorPickerModule } from 'primeng/colorpicker';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DropdownModule } from 'primeng/dropdown';
 
 import { AgGridModule } from 'ag-grid-angular';
 import { SharedServicesModule } from '../shared-services/shared-services.module';
@@ -43,6 +44,7 @@ const appRoutes: Routes = [
     ColorPickerModule,
     ButtonModule,
     CheckboxModule,
+    DropdownModule,
     AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],

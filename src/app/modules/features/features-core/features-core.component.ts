@@ -709,7 +709,6 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     var jsonData = event.dataTransfer.getData(isIE ? 'text' : 'application/json');
     var data = JSON.parse(jsonData);
 
-    console.log(data);
     if (!data || (data[this.layerFieldsId] === undefined) || (data[this.layerFieldsTitle] === undefined)) {
       return;
     }

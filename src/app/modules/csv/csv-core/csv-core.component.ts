@@ -1,12 +1,24 @@
-import { Component, ChangeDetectorRef, ElementRef, ViewChild, OnInit, OnDestroy, ViewChildren, QueryList } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, ElementRef, ChangeDetectorRef, Input, ViewChild, NgZone } from '@angular/core';
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
+
+import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
 import { ActionNotificationService } from '../../../services/action-notification.service';
 
+import * as _ from 'lodash';
+import { jsUtils } from '../../../library/jsUtils';
+import { OwfApi } from '../../../library/owf-api';
+
 import * as xls from 'xlsx';
 import * as papa from 'papaparse';
+
+interface Track {
+  title: string;
+  uuid: string;
+}
 
 @Component({
   selector: 'app-csv-core',
@@ -24,9 +36,24 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     'display': 'inline'
   }
 
-  layerRefreshImageSrc = "/OWFTracks/assets/images/close.svg";
+  divLayerRefreshCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '22px',
+    'display': 'inline'
+  }
+
+  layerSearchImageSrc = "/OWFTracks/assets/images/close.svg";
+  layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
+
   searchText = "";
   showLabels = false;
+
+  jsutils = new jsUtils();
+  owfApi = new OwfApi();
+
+  credentialsRequired: boolean = false;
+  connectionFailure: boolean = false;
 
   public filename: string = "";
   public color: any = "#f38c06";
@@ -43,8 +70,13 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   recordsError = 0;
   recordsSelected = 0;
 
+  layers: any[] = [{title: "-- SELECT LAYER --", uuid: null}];
+  layersDefinition: any[] = [];
+  layerSelected: Track;
+
   constructor(private configService: ConfigService,
     private notificationService: ActionNotificationService,
+    private http: HttpClient,
     private cdr: ChangeDetectorRef) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
@@ -59,7 +91,12 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   ngOnInit() {
     //console.log("csv-core initialized.");
     this.config = this.configService.getConfig();
-    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
+
+    this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/refresh.svg";
+    this.layerSearchImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
+
+    // load directory if provided
+    this.getDirectoryLayers();
   }
 
   ngOnDestroy() {
@@ -67,6 +104,136 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
     // prevent memory leak when component destroyed
     this.subscription.unsubscribe();
+  }
+
+  private getDirectoryLayers() {
+    let selectedLayer;
+    this.connectionFailure = true;
+    this.config.directories.forEach((directory) => {
+      let directoryObserable: Observable<any> = this.http
+        .get<any>(directory.path, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError)/*, tap(console.log)*/);
+
+      let directorySubscription = directoryObserable.subscribe(
+        (directoryCollection) => {
+          this.connectionFailure = false;
+          directorySubscription.unsubscribe();
+
+          directoryCollection.directory.forEach((services) => {
+            // retrieve the directory and get layer list
+            let layerType = "feature";
+            let layerParams = this.config.layerParam.defaults;
+            let layerUrl = "";
+            let layerMSG, newItem;
+            let urlParser, layerHost = "";
+            services.layer.services.forEach((service) => {
+              service["uuid"] = this.jsutils.uuidv4();
+              service.tempArea = {};
+
+              layerType = service.params.serviceType || services.layer.params.serviceType || "feature";
+              if (layerType === "feature") {
+                layerType = "arcgis-feature";
+
+                // process the layer into definition
+
+                // copy layer params from top level
+                if (services.layer.params) {
+                  Object.keys(services.layer.params).forEach((param) => {
+                    layerParams[param] = services.layer.params[param];
+                  });
+                }
+
+                // copy layer service params
+                if (service.params) {
+                  Object.keys(service.params).forEach((param) => {
+                    layerParams[param] = service.params[param];
+                  });
+                }
+
+                // cleanup params
+                delete layerParams.serviceType;
+                delete layerParams.url;
+                delete layerParams.data;
+                delete layerParams.zoom;
+                delete layerParams.refresh;
+                delete layerParams._comment;
+                delete layerParams.intranet;
+
+                // copy the default overrides
+                if (directory.layerParam.overrides) {
+                  Object.keys(directory.layerParam.overrides).forEach((param) => {
+                    layerParams[param] = directory.layerParam.overrides[param];
+                  });
+                }
+
+                // update service url
+                layerUrl = service.url || services.properties.url;
+                if ((service.params.layers !== undefined) && (service.params.layers !== null)) {
+                  layerUrl = layerUrl +
+                    ((layerUrl.endsWith("/")) ? "" : "/") + service.params.layers;
+                }
+                if ((services.properties.token !== undefined) && (services.properties.token !== null)) {
+                  urlParser = new URL(layerUrl);
+                  layerHost = urlParser.host;
+
+                  // get the token if available; else parse it
+                  this.config.tokenServices.forEach((service) => {
+                    if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
+                      (service.serviceUrl === layerHost)) {
+                      if (layerUrl.includes("?")) {
+                        layerUrl += "&token=" + service.token;
+                      } else {
+                        layerUrl += "?token=" + service.token;
+                      }
+                    }
+                  });
+                }
+
+                // create the service message for layerDefinition
+                layerMSG = {};
+                layerMSG.overlayId = directory.name;
+                layerMSG.featureId = service.name;
+                layerMSG.name = service.name;
+                layerMSG.format = layerType;
+                layerMSG.params = layerParams;
+                if ((service.params.zoom !== undefined) || (service.params.zoom !== null)) {
+                  layerMSG.zoom = service.params.zoom;
+                }
+
+                layerMSG.mapId = 1;
+                layerMSG.url = layerUrl;
+                layerMSG["uuid"] = service["uuid"];
+                layerMSG.tempArea = {};
+
+                // check roles to for command set option in infotemplate
+
+                // add the new item
+                newItem = { title: (layerMSG.name + "/" + layerMSG.overlayId), uuid: service.uuid };
+                if (!selectedLayer) {
+                  selectedLayer = newItem;
+                }
+
+                // trigger angular binding
+                this.layers = [...this.layers, newItem];
+                this.layersDefinition = [...this.layersDefinition, layerMSG];
+              }
+            });
+          });
+        },
+        error => {
+          console.log('HTTP Error', error);
+        },
+        () => {
+          if (!this.connectionFailure) {
+            //console.log('HTTP request completed.');
+          } else {
+            window.alert('OPS Track Widget: HTTP other layer error; not trapped.\n' +
+              directory);
+          }
+        });
+    });
   }
 
   sendNotification(payload) {
@@ -192,5 +359,41 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     frame.style.top = '83px';
     frame.style.left = 'unset';
     frame.style.right = '0px';
+  }
+
+  selectedLayer($event: any): void {
+    this.layerSelected = $event.value;
+
+    // change ui state and force change
+    if (this.layerSelected.title !== "-- SELECT LAYER --") {
+      this.layersDefinition.forEach((value, index) => {
+        if (value.uuid === this.layerSelected.uuid) {
+          // retrieve current locations of items
+          // 1/ get field list via info
+          // 2/ if no mmsi present (show alert)
+          // 3/ query data on mmsi = csvmmsi
+          // 4/ update grid with locs
+          // 5/ set color to light blue
+          // 6/ if not found set to orange
+        }
+      });
+    }
+  }
+
+  refreshLayer($event) {
+    this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    if (error.error instanceof ErrorEvent) {
+      // client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+
+    return throwError(errorMessage);
   }
 }

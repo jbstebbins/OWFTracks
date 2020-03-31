@@ -89,7 +89,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   layerFieldsId: string;
   layerFieldsTitle: string;
 
-  layers: any[] = [];
+  layers: any[] = [{title: "-- SELECT LAYER --", uuid: null}];
   layersDefinition: any[] = [];
   layerSelected: Track;
 
@@ -335,6 +335,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
     // load directory if provided
     this.getDirectoryLayers();
+    this.layerSelected = this.layers[0];
 
     // subscribe to catalog/map integration
     if (this.config.mapInterface.onPlot === true) {
@@ -539,8 +540,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           this.configService.setMemoryValue("layersDefinition", this.layersDefinition);
 
           // activate the first layer
-          this.layerSelected = selectedLayer;
-          this.selectedLayer({ originalEvent: null, value: this.layerSelected });
+          // this.layerSelected = selectedLayer;
+          // this.selectedLayer({ originalEvent: null, value: this.layerSelected });
         },
         error => {
           console.log('HTTP Error', error);
@@ -675,12 +676,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.loadComponent = false;
     this.cdr.detectChanges();
 
-    this.layersDefinition.forEach((value, index) => {
-      if (value.uuid === this.layerSelected.uuid) {
-        this.layer = value;
-        this.loadComponent = true;
-      }
-    });
+    if (this.layerSelected.title !== "-- SELECT LAYER --") {
+      this.layersDefinition.forEach((value, index) => {
+        if (value.uuid === this.layerSelected.uuid) {
+          this.layer = value;
+          this.loadComponent = true;
+        }
+      });
+    }
   }
 
   gridDragOver(event) {
@@ -691,6 +694,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       event.preventDefault();
 
       this.divDragDropCss.display = 'block';
+      window.setTimeout(() => {
+        this.divDragDropCss.display = 'none';
+      }, 5000);
     }
   }
 

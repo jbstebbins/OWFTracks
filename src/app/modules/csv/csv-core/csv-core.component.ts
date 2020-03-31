@@ -33,7 +33,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   public records: any[] = [];
   public searchValue: string;
   public loadComponent: boolean = false;
-  public isDataValid: boolean = true;
+  public isDataValid: boolean = false;
+  public loadInitial: boolean = true;
   public loadStatus: string = "(no file selected!)";
   @ViewChild('csvStatus') csvStatus: ElementRef;
   @ViewChild('colorPicker') colorPicker: ElementRef;
@@ -113,6 +114,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
           this.recordsError = error;
           this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
           this.loadComponent = true;
+          this.loadInitial = false;
         };
 
         reader.onerror = function () {
@@ -138,6 +140,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
           this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
           this.loadComponent = true;
+          this.loadInitial = false;
         }
       }
     } else {
@@ -155,6 +158,12 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   handleClick($event: any): void {
     this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { showLabels: this.showLabels, color: this.color } });
+  }
+
+  handleResetClick($event: any): void {
+    this.loadComponent = false;
+    this.isDataValid = false;
+    this.loadInitial = true;
   }
 
   isValidCSVFile(file: any) {

@@ -62,6 +62,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   public loadComponent: boolean = false;
   public isDataValid: boolean = false;
   public loadInitial: boolean = true;
+  public loadMMSISync: boolean = false;
   public loadStatus: string = "(no file selected!)";
   @ViewChild('csvStatus') csvStatus: ElementRef;
   @ViewChild('colorPicker') colorPicker: ElementRef;
@@ -74,7 +75,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   layersDefinition: any[] = [];
   layerSelected: Track;
 
-  constructor(private configService: ConfigService,
+  constructor(private _zone: NgZone,
+    private configService: ConfigService,
     private notificationService: ActionNotificationService,
     private http: HttpClient,
     private cdr: ChangeDetectorRef) {
@@ -82,8 +84,13 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
       payload => {
         //console.log(`${payload.action}, received by csv-core.component`);
 
+        if (payload.action === "CSV LAYERSYNC ENABLED") {
+          this.loadMMSISync = payload.value;
+          this.cdr.detectChanges();
+        } else 
         if (payload.action === "CSV INVALID DATA") {
           this.isDataValid = !payload.value;
+          this.cdr.detectChanges();
         }
       });
   }
@@ -249,6 +256,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     let files = $event.srcElement.files;
     let input = $event.target;
     
+    this.loadMMSISync = false;
     if (this.isValidCSVFile(files[0])) {
       let reader = new FileReader();
 
@@ -282,6 +290,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
           this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
           this.loadComponent = true;
           this.loadInitial = false;
+
+          input.value = '';
         };
 
         reader.onerror = function () {
@@ -308,7 +318,9 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
           this.loadStatus = "(records loaded: " + count + ", error: " + error + ")";
           this.loadComponent = true;
           this.loadInitial = false;
-        }
+
+          input.value = '';
+        };
       }
     } else {
       alert("Please import valid .csv file.");
@@ -331,6 +343,10 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     this.loadComponent = false;
     this.isDataValid = false;
     this.loadInitial = true;
+  }
+
+  handleShareClick($event: any): void {
+    console.log($event);
   }
 
   isValidCSVFile(file: any) {
@@ -368,13 +384,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
     if (this.layerSelected.title !== "-- SELECT LAYER --") {
       this.layersDefinition.forEach((value, index) => {
         if (value.uuid === this.layerSelected.uuid) {
-          // retrieve current locations of items
-          // 1/ get field list via info
-          // 2/ if no mmsi present (show alert)
-          // 3/ query data on mmsi = csvmmsi
-          // 4/ update grid with locs
-          // 5/ set color to light blue
-          // 6/ if not found set to orange
+          this.notificationService.publisherAction({ action: 'CSV LAYERSYNC LAYERINFO', value: value });
         }
       });
     }

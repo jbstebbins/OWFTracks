@@ -1,4 +1,7 @@
 <div style="width: 100%; height: calc(100vh - 85px);">
+  <span #queryStatus [ngStyle]="divQueryStatusCss">
+    {{queryStatusMessage}}
+  </span>
   <ag-grid-angular #agGridCSV class="ag-theme-balham" [rowData]="rowData" [modules]="agmodules"
     [columnDefs]="columnDefinitions" [domLayout]="domLayout" [pagination]="true"
     [paginationNumberFormatter]="paginationNumberFormatter" [paginationPageSize]="paginationPageSize"

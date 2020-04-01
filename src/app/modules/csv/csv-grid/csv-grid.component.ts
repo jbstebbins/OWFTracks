@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, ElementRef, Input, ViewChild } from '@angular/core';
-import { Observable, Observer, of, Subject, EMPTY, Subscription, interval } from 'rxjs';
-import { startWith, switchMap } from 'rxjs/operators'
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
+
+import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 import * as _ from 'lodash';
 import { OwfApi } from '../../../library/owf-api';
@@ -30,6 +32,19 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   jsutils = new jsUtils();
   owfApi = new OwfApi();
   worker: CsvToKmlWorker;
+
+  credentialsRequired: boolean = false;
+  connectionFailure: boolean = false;
+
+  divQueryStatusCss = {
+    'display': 'none',
+    'width': '100%',
+    'background-color': 'gold',
+    'z-index': '99',
+    'position': 'fixed',
+    'color': 'black'
+  }
+  queryStatusMessage = "please wait, querying services...";
 
   @ViewChild('agGridCSV') agGrid: AgGridAngular;
 
@@ -62,12 +77,29 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   @Input()
   parentColor: any[];
 
+  layer: any = {};
+  layerBaseUrl: string = "";
+  layerServiceUrl: string = "";
+  layerToken: string = "";
+  layerRecords: number = 0;
+  layerFields: any[] = [];
+  layerTitleField: string = "";
+  layerOffset: number = 0;
+  layerMaxRecords: number = 1000;
+  layerIDField: string = "";
+  layerAdvancedFeatures: any;
+
   constructor(private configService: ConfigService,
+    private http: HttpClient,
     private notificationService: ActionNotificationService) {
     this.subscription = notificationService.publisher$.subscribe(
       payload => {
         //console.log(`${payload.action}, received by csv-grid.component`);
 
+        if (payload.action === "CSV LAYERSYNC LAYERINFO") {
+          this.layer = payload.value;
+          this.getLayerInfo();
+        } else
         if (payload.action === "CSV SEARCH VALUE") {
           this.searchValue = payload.value;
           //this.gridApi.onFilterChanged();
@@ -218,6 +250,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
     this.worker.onmessage().subscribe((event) => {
       this.owfApi.sendChannelRequest("map.feature.plot", event.data.kml);
+
+      this.setQueryStatus("", "reset");
     });
 
     this.worker.onerror().subscribe((data) => {
@@ -283,6 +317,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           } else if ((itemTemp === "point") || (itemTemp === "x/y") || (itemTemp === "x;y")) {
             latIndex = item;
             lonIndex = item;
+          } else if (itemTemp === "mmsi") {
+            this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true });
           }
         }
 
@@ -315,6 +351,108 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   }
 
   onFirstDataRendered(params) {
+  }
+
+  private getLayerInfo() {
+    this.setQueryStatus("layer info query...");
+
+    // get the layer definition
+    let url = this.layerBaseUrl + "?" + "f=json";
+    if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+      url += "&token=" + this.layerToken;
+    }
+    let urlMetadata: Observable<any>;
+
+    this.connectionFailure = true;
+    if (!this.credentialsRequired) {
+      urlMetadata = this.http
+        .get<any>(url, { responseType: 'json' })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError)/*, tap(console.log)*/);
+    } else {
+      urlMetadata = this.http
+        .get<any>(url, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError)/*, tap(console.log)*/);
+    }
+
+    // handle error
+    let urlMetadataSubscription = urlMetadata.subscribe(
+      (response) => {
+        this.connectionFailure = false;
+
+        this.layerFields = response.fields;
+        this.layerAdvancedFeatures = response.advancedQueryCapabilities;
+        urlMetadataSubscription.unsubscribe();
+
+        // build the grid layout
+        this.gridOptions = <GridOptions>{
+          rowData: this.rowData,
+          columnDefs: this.createColumnDefs(),
+          context: {
+            componentParent: this
+          },
+          pagination: true
+        };
+
+        // retrieve the record count
+        // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
+        let url = this.layerBaseUrl + "/query?" + "f=json" +
+          "&where=1%3D1" +
+          "&returnGeometry=false" +
+          "&returnCountOnly=true";
+
+        if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+          url += "&token=" + this.layerToken;
+        }
+        let urlRecordCountdata: Observable<any>;
+
+        if (!this.credentialsRequired) {
+          urlRecordCountdata = this.http
+            .get<any>(url, { responseType: 'json' })
+            .pipe(
+              retryWhen(errors => errors.pipe(delay(2000), take(2))),
+              catchError(this.handleError)/*, tap(console.log)*/);
+        } else {
+          urlRecordCountdata = this.http
+            .get<any>(url, { responseType: 'json', withCredentials: true })
+            .pipe(
+              retryWhen(errors => errors.pipe(delay(2000), take(2))),
+              catchError(this.handleError)/*, tap(console.log)*/);
+        }
+
+        let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
+          urlRecordCountSubscription.unsubscribe();
+
+          this.layerRecords = model.count;
+
+          this.setQueryStatus("layer data query...");
+          this.retrieveLayerData();
+        });
+      },
+      error => {
+        console.log('HTTP Error', error);
+        this.setQueryStatus("layer error/" + error, "error");
+      },
+      () => {
+        if (!this.connectionFailure) {
+          //console.log('HTTP request completed.');
+          this.setQueryStatus("", "reset");
+        } else if (!this.credentialsRequired) {
+          this.credentialsRequired = true;
+          this.getLayerInfo();
+        } else {
+          this.setQueryStatus("layer error (external)...", "error");
+          window.alert('OPS Track Widget: HTTP other layer error; not trapped.\n' +
+            this.layerBaseUrl);
+        }
+      });
+  }
+
+  private retrieveLayerData(field?, value?) {
+    this.setQueryStatus("data query...");
   }
 
   private updateGridData(filterText?: string) {
@@ -402,5 +540,39 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         }, 5000);
       }
     }
+  }
+
+  setQueryStatus(message, status?) {
+    let resetMessage = "please wait, ";
+    if ((status !== undefined) && (status !== null)) {
+      if (status === "error") {
+        this.queryStatusMessage = resetMessage + " /" + message;
+        this.divQueryStatusCss.display = "table-cell";
+        this.divQueryStatusCss["background-color"] = "red";
+        this.divQueryStatusCss.color = "white";
+      } else if (status === "reset") {
+        this.divQueryStatusCss.display = "none";
+        this.divQueryStatusCss["background-color"] = "gold";
+        this.divQueryStatusCss.color = "black";
+      }
+    } else {
+      this.queryStatusMessage = resetMessage + " /" + message;
+      this.divQueryStatusCss.display = "table-cell";
+      this.divQueryStatusCss["background-color"] = "gold";
+      this.divQueryStatusCss.color = "black";
+    }
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = '';
+    if (error.error instanceof ErrorEvent) {
+      // client-side error
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+
+    return throwError(errorMessage);
   }
 }

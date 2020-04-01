@@ -5,16 +5,18 @@
       <span *ngIf="loadComponent" style="float: left;height: 22px;display: flex;">
         <button pButton type="button" icon="pi pi-refresh" iconPos="left" styleClass="ui-button-info"
           (click)="handleResetClick($event)" style="height: 23px;"></button>
-        <button pButton type="button" icon="pi pi-share-alt" iconPos="left" styleClass="ui-button-info"
-          (click)="handleResetClick($event)" style="height: 23px;"></button>
-        <div style="height: 22px;position:fixed;z-index:1003;left: 75px;">Layer:
-          <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
-            (onChange)="selectedLayer($event)"></p-dropdown>
-          <div #layerRefresh id="layerRefresh" [ngStyle]="divLayerRefreshCss" (click)="refreshLayer($event)">
-            <img src="{{layerRefreshImageSrc}}" title="Refresh layer..."
-              style="width:20px;height:20px;padding:1px;margin-left:5px;">
+        <span *ngIf="loadMMSISync" style="display:flex; white-space:nowrap;">
+          <button pButton type="button" icon="pi pi-share-alt" iconPos="left" styleClass="ui-button-info"
+            (click)="handleShareClick($event)" style="height: 23px;"></button>
+          <div style="height: 22px;position:fixed;z-index:1003;left: 75px;">Layer:
+            <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
+              (onChange)="selectedLayer($event)"></p-dropdown>
+            <div #layerRefresh id="layerRefresh" [ngStyle]="divLayerRefreshCss" (click)="refreshLayer($event)">
+              <img src="{{layerRefreshImageSrc}}" title="Refresh layer..."
+                style="width:20px;height:20px;padding:1px;margin-left:5px;">
+            </div>
           </div>
-        </div>
+        </span>
       </span>
       <div *ngIf="loadComponent">
         <span *ngIf="isDataValid" style="float: right;height: 22px;display: flex;">
@@ -25,14 +27,15 @@
           <button pButton type="button" icon="pi pi-globe" iconPos="left" styleClass="ui-button-info"
             (click)="handleClick($event)" style="height: 23px;"></button>
         </span>
-        <span style="float:right;margin-right:10px;">Search: <input type="text" #csvSearch name="Search CSV" id="csvSearch" [(ngModel)]="searchText"
-          (keydown)="searchListener($event)" title="Enter Search Text..." style="color: black;" />
-        <div #layerRefresh id="layerRefresh" [ngStyle]="divCSVRefreshCss" (click)="refreshCSV($event)">
-          <img src="{{layerSearchImageSrc}}" title="Clear filters..."
-            style="width:20px;height:20px;padding:1px;margin-left:5px;">
-        </div>
-      </span>
-    </div>
+        <span style="float:right;margin-right:10px;">Search: <input type="text" #csvSearch name="Search CSV"
+            id="csvSearch" [(ngModel)]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..."
+            style="color: black;" />
+          <div #layerRefresh id="layerRefresh" [ngStyle]="divCSVRefreshCss" (click)="refreshCSV($event)">
+            <img src="{{layerSearchImageSrc}}" title="Clear filters..."
+              style="width:20px;height:20px;padding:1px;margin-left:5px;">
+          </div>
+        </span>
+      </div>
     </div>
     <div *ngIf="loadInitial" class="col-md" style="margin-top: 5px;padding: unset;text-align: left;">
       <input type="file" #csvFileUpload name="Upload CSV/XLS" id="csvFileUpload" (click)="fileSelectListener($event)"

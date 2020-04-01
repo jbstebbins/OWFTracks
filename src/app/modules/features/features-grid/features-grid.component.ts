@@ -331,7 +331,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   private getLayerInfo() {
-    this.setQueryStatus("layer info query...")
+    this.setQueryStatus("layer info query...");
 
     // get the layer definition
     let url = this.layerBaseUrl + "?" + "f=json";
@@ -414,13 +414,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
             }
           });
 
-          this.setQueryStatus("layer data query...")
+          this.setQueryStatus("layer data query...");
           this.retrieveLayerData();
         });
       },
       error => {
         console.log('HTTP Error', error);
-        this.setQueryStatus("layer error/" + error, "error")
+        this.setQueryStatus("layer error/" + error, "error");
       },
       () => {
         if (!this.connectionFailure) {
@@ -430,7 +430,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
           this.credentialsRequired = true;
           this.getLayerInfo();
         } else {
-          this.setQueryStatus("layer error (external)...", "error")
+          this.setQueryStatus("layer error (external)...", "error");
           window.alert('OPS Track Widget: HTTP other layer error; not trapped.\n' +
             this.layerBaseUrl);
         }
@@ -438,7 +438,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   private createColumnDefs() {
-    this.setQueryStatus("creating grid columns...", "info")
+    this.setQueryStatus("creating grid columns...", "info");
 
     if (this.layerFields) {
       this.columnDefinitions = [];
@@ -512,7 +512,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       this.setQueryStatus("", "reset");
       return this.columnDefinitions;
     } else {
-      this.setQueryStatus("no field information received; check token!", "error")
+      this.setQueryStatus("no field information received; check token!", "error");
       return null;
     }
   }
@@ -545,8 +545,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     return "[" + params.value.toLocaleString() + "]";
   }
 
-  retrieveLayerData(field?, value?) {
-    // retrieve the record count
+  private retrieveLayerData(field?, value?) {
     this.setQueryStatus("data query...");
 
     // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
@@ -588,7 +587,11 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         }
       } else {
         let strValue = value.toLowerCase();
-        let strValueUpFirst = value.charAt(0).toUpperCase() + value.slice(1);
+        let strValueArray = strValue.split(" ");
+        strValueArray.forEach((value, index) => {
+          strValueArray[index] = value.charAt(0).toUpperCase() + value.slice(1);
+        });
+        let strValueUpFirst = strValueArray.join(" ");
 
         url += "&where=" + field + "+like+" + encodeURIComponent("'%" + strValue + "%'") +
           "+OR+" + field + "+like+" + encodeURIComponent("UPPER('%" + strValue + "%')") +
@@ -646,7 +649,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     },
     error => {
       console.log('HTTP Error', error);
-      this.setQueryStatus("data query, error/" + error, "error")
+      this.setQueryStatus("data query, error/" + error, "error");
     },
     () => {
       if (!this.connectionFailure) {
@@ -656,7 +659,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
         this.credentialsRequired = true;
         this.getLayerInfo();
       } else {
-        this.setQueryStatus("data query error (external)...", "error")
+        this.setQueryStatus("data query error (external)...", "error");
         window.alert('OPS Tracks Widget: HTTP other layer error; not trapped.\n' +
           this.layerBaseUrl);
       }

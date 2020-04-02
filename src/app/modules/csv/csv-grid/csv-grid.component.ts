@@ -61,6 +61,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   rowData: any[] = [];
   columnTracking: any[] = [-1, -1, -1];
   filterActive: boolean = false;
+  mmsiList: any[] = [];
+  mmsiListBatch: any[] = [];
 
   domLayout = "normal";
   rowSelection = "multiple";
@@ -88,6 +90,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   layerMaxRecords: number = 1000;
   layerIDField: string = "";
   layerAdvancedFeatures: any;
+  layerMMSIFieldName = "mmsi";
 
   constructor(private configService: ConfigService,
     private http: HttpClient,
@@ -100,47 +103,47 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           this.layer = payload.value;
           this.getLayerInfo();
         } else
-        if (payload.action === "CSV SEARCH VALUE") {
-          this.searchValue = payload.value;
-          //this.gridApi.onFilterChanged();
+          if (payload.action === "CSV SEARCH VALUE") {
+            this.searchValue = payload.value;
+            //this.gridApi.onFilterChanged();
 
-          this.gridApi.deselectAll();
-          this.gridApi.deselectAllFiltered();
+            this.gridApi.deselectAll();
+            this.gridApi.deselectAllFiltered();
 
-          if (this.searchValue !== "") {
-            this.filterActive = true;
-          } else {
-            this.filterActive = false;
-          }
-
-          this.gridApi.setQuickFilter(this.searchValue);
-        } else if (payload.action === "CSV PLOT ON MAP") {
-          let tracks = [];
-          if (this.filterActive) {
-            let selectedRows = this.gridApi.getSelectedRows();
-            if (selectedRows.length !== 0) {
-              tracks = selectedRows;
+            if (this.searchValue !== "") {
+              this.filterActive = true;
             } else {
-              this.gridApi.forEachNodeAfterFilter((node, index) => {
-                tracks.push(node.data);
-              });
+              this.filterActive = false;
             }
-          } else {
-            let selectedRows = this.gridApi.getSelectedRows();
-            if (selectedRows.length !== 0) {
-              tracks = selectedRows;
-            } else {
-              tracks = this.rowData;
-            }
-          }
 
-          this.worker.postMessage({
-            overlayId: "CSV-Viewer",
-            filename: this.parentFileName, tracks: tracks,
-            showLabels: payload.value.showLabels, color: payload.value.color,
-            columnTracking: this.columnTracking
-          });
-        }
+            this.gridApi.setQuickFilter(this.searchValue);
+          } else if (payload.action === "CSV PLOT ON MAP") {
+            let tracks = [];
+            if (this.filterActive) {
+              let selectedRows = this.gridApi.getSelectedRows();
+              if (selectedRows.length !== 0) {
+                tracks = selectedRows;
+              } else {
+                this.gridApi.forEachNodeAfterFilter((node, index) => {
+                  tracks.push(node.data);
+                });
+              }
+            } else {
+              let selectedRows = this.gridApi.getSelectedRows();
+              if (selectedRows.length !== 0) {
+                tracks = selectedRows;
+              } else {
+                tracks = this.rowData;
+              }
+            }
+
+            this.worker.postMessage({
+              overlayId: "CSV-Viewer",
+              filename: this.parentFileName, tracks: tracks,
+              showLabels: payload.value.showLabels, color: payload.value.color,
+              columnTracking: this.columnTracking
+            });
+          }
       });
   }
 
@@ -285,6 +288,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
       let titleIndex = -1, latIndex = -1, lonIndex = -1;
       let itemTemp = "", geom;
+      let mmsiFound = false;
       header.forEach((item) => {
         if (index < 50) {
           item = item.replace(/[^0-9a-z -_]/gi, '').substring(0, 20);
@@ -318,7 +322,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             latIndex = item;
             lonIndex = item;
           } else if (itemTemp === "mmsi") {
-            this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true });
+            mmsiFound = true;
           }
         }
 
@@ -326,6 +330,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       });
 
       // tracking for data parsing
+      if (mmsiFound) {
+        this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true })
+      }
       this.columnTracking = [titleIndex, latIndex, lonIndex];
 
       // remove header row from imported data
@@ -355,6 +362,38 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
   private getLayerInfo() {
     this.setQueryStatus("layer info query...");
+
+    // split the url and extract the token (if provided)
+    let urlArray = [] = this.layer.url.split("?");
+    this.layerBaseUrl = urlArray[0];
+
+    // get referer
+    let urlParser = new URL(this.layerBaseUrl);
+    this.layerServiceUrl = urlParser.host;
+
+    // get the token if available; else parse it
+    this.layerToken = "";
+    this.config.tokenServices.forEach((service) => {
+      if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
+        (service.serviceUrl === this.layerServiceUrl)) {
+        this.layerToken = service.token;
+      }
+    });
+
+    // get token from params
+    if (this.layerToken === "") {
+      let urlParamArray = [];
+      if (urlArray.length > 1) {
+        urlParamArray = urlArray[1].split("&");
+        if (urlParamArray.length >= 1) {
+          urlParamArray.forEach((value, index) => {
+            if (value.startsWith("token=")) {
+              this.layerToken = value.replace("&token=", "").replace("token=", "");
+            }
+          });
+        }
+      }
+    }
 
     // get the layer definition
     let url = this.layerBaseUrl + "?" + "f=json";
@@ -387,50 +426,62 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         this.layerAdvancedFeatures = response.advancedQueryCapabilities;
         urlMetadataSubscription.unsubscribe();
 
-        // build the grid layout
-        this.gridOptions = <GridOptions>{
-          rowData: this.rowData,
-          columnDefs: this.createColumnDefs(),
-          context: {
-            componentParent: this
-          },
-          pagination: true
-        };
+        // check if layerFields have mmsi
+        let mmsiFound = false;
+        this.layerFields.forEach((field) => {
+          if (field.name.toLowerCase() === "mmsi") {
+            mmsiFound = true;
+            this.layerMMSIFieldName = field.name;
+          }
+        });
 
         // retrieve the record count
-        // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
-        let url = this.layerBaseUrl + "/query?" + "f=json" +
-          "&where=1%3D1" +
-          "&returnGeometry=false" +
-          "&returnCountOnly=true";
+        if (mmsiFound) {
+          // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
+          let url = this.layerBaseUrl + "/query?" + "f=json" +
+            "&where=1%3D1" +
+            "&returnGeometry=false" +
+            "&returnCountOnly=true";
 
-        if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
-          url += "&token=" + this.layerToken;
-        }
-        let urlRecordCountdata: Observable<any>;
+          if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+            url += "&token=" + this.layerToken;
+          }
+          let urlRecordCountdata: Observable<any>;
 
-        if (!this.credentialsRequired) {
-          urlRecordCountdata = this.http
-            .get<any>(url, { responseType: 'json' })
-            .pipe(
-              retryWhen(errors => errors.pipe(delay(2000), take(2))),
-              catchError(this.handleError)/*, tap(console.log)*/);
+          if (!this.credentialsRequired) {
+            urlRecordCountdata = this.http
+              .get<any>(url, { responseType: 'json' })
+              .pipe(
+                retryWhen(errors => errors.pipe(delay(2000), take(2))),
+                catchError(this.handleError)/*, tap(console.log)*/);
+          } else {
+            urlRecordCountdata = this.http
+              .get<any>(url, { responseType: 'json', withCredentials: true })
+              .pipe(
+                retryWhen(errors => errors.pipe(delay(2000), take(2))),
+                catchError(this.handleError)/*, tap(console.log)*/);
+          }
+
+          let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
+            urlRecordCountSubscription.unsubscribe();
+
+            this.layerRecords = model.count;
+
+            this.setQueryStatus("layer data query...");
+            // split data in 20 records at a time
+            let listLength = this.mmsiList.length;
+            let listBatchSize = Math.ceil(listLength / 15);
+            let mmsiList = [...this.mmsiList];
+            for(let i=0; i<listBatchSize; i++) {
+              this.mmsiListBatch.push(mmsiList.splice(0, 15));
+            }
+            this.retrieveLayerData();
+          });
         } else {
-          urlRecordCountdata = this.http
-            .get<any>(url, { responseType: 'json', withCredentials: true })
-            .pipe(
-              retryWhen(errors => errors.pipe(delay(2000), take(2))),
-              catchError(this.handleError)/*, tap(console.log)*/);
+          this.setQueryStatus("layer error/mmsi field not found");
+          window.alert('OPS Track Widget: layer does not contain mmsi field for track match.\n' +
+            this.layerBaseUrl);
         }
-
-        let urlRecordCountSubscription = urlRecordCountdata.subscribe(model => {
-          urlRecordCountSubscription.unsubscribe();
-
-          this.layerRecords = model.count;
-
-          this.setQueryStatus("layer data query...");
-          this.retrieveLayerData();
-        });
       },
       error => {
         console.log('HTTP Error', error);
@@ -451,12 +502,90 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       });
   }
 
-  private retrieveLayerData(field?, value?) {
+  private retrieveLayerData() {
     this.setQueryStatus("data query...");
+
+    // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
+    let url = this.layerBaseUrl + "/query?" + "f=json" +
+      "&returnGeometry=true" +
+      "&returnQueryGeometry=true" +
+      "&returnExceededLimitFeatures=true" +
+      "&outFields=*" +
+      //"&orderByFields=" + this.layerIDField +
+      //"&resultOffset=" + this.layerOffset +
+      //"&resultRecordCount=" + this.layerMaxRecords +
+      "&outSR=4326";
+
+    // add field filters if required
+    url += "&where=" + this.layerMMSIFieldName + "+IN+" + 
+      encodeURIComponent("(" + this.mmsiListBatch.join(",") + ")");
+
+    if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+      url += "&token=" + this.layerToken;
+    }
+    let urlRecorddata: Observable<any>;
+
+    this.connectionFailure = true;
+    if (!this.credentialsRequired) {
+      urlRecorddata = this.http
+        .get<any>(url, { responseType: 'json' })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError)/*, tap(console.log)*/);
+    } else {
+      urlRecorddata = this.http
+        .get<any>(url, { responseType: 'json', withCredentials: true })
+        .pipe(
+          retryWhen(errors => errors.pipe(delay(2000), take(2))),
+          catchError(this.handleError)/*, tap(console.log)*/);
+    }
+
+    let urlRecordSubscription = urlRecorddata.subscribe((model) => {
+      urlRecordSubscription.unsubscribe();
+
+      this.connectionFailure = false;
+      this.setQueryStatus("data received, processing...");
+
+      // send notification to parent that partial result was returned
+      if (model.features) {
+        let recordCount = model.features.length;
+        console.log("layer data received:" + recordCount);
+
+        this.mmsiListBatch.slice(0);
+        if (this.mmsiListBatch.length === 0) {
+          console.log("", "reset");
+        } else {
+          window.setTimeout(() => {
+            this.retrieveLayerData();
+          }, 100);
+        }
+      } else {
+        this.setQueryStatus("data received, error... /code-" + model.error.code + "/" + model.error.message, "error");
+        alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
+      }
+    },
+    error => {
+      console.log('HTTP Error', error);
+      this.setQueryStatus("data query, error/" + error, "error");
+    },
+    () => {
+      if (!this.connectionFailure) {
+        //console.log('HTTP request completed.');
+        this.setQueryStatus("", "reset");
+      } else if (!this.credentialsRequired) {
+        this.credentialsRequired = true;
+        this.getLayerInfo();
+      } else {
+        this.setQueryStatus("data query error (external)...", "error");
+        window.alert('OPS Tracks Widget: HTTP other layer error; not trapped.\n' +
+          this.layerBaseUrl);
+      }
+    });
   }
 
   private updateGridData(filterText?: string) {
     this.rowData = [];
+    this.mmsiList = [];
 
     if ((filterText !== null) && (filterText !== undefined)) {
       filterText = filterText.toLowerCase();
@@ -484,6 +613,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         this.rowHeaders.forEach((header) => {
           record[header] = value[index++];
 
+          if (header.toLowerCase() === "mmsi") {
+            this.mmsiList.push(record[header]);
+          } else 
           // convert lat/lon if needed
           if ((this.columnTracking[1] !== this.columnTracking[2]) &&
             ((header === this.columnTracking[1]) || (header === this.columnTracking[2]))) {

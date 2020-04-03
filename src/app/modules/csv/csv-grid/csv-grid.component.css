@@ -1,0 +1,6 @@
+.rowMatchUpdated {
+    background-color: rgb(110, 165, 179);
+}
+.rowMatchClear {
+    background-color: unset;
+}

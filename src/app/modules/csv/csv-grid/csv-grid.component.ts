@@ -61,8 +61,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   rowData: any[] = [];
   columnTracking: any[] = [-1, -1, -1];
   filterActive: boolean = false;
-  mmsiList: any[] = [];
+  mmsiList: string[] = [];
   mmsiListBatch: any[] = [];
+  mmsiListBatchIndex: 0;
 
   domLayout = "normal";
   rowSelection = "multiple";
@@ -157,7 +158,11 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       context: {
         componentParent: this
       },
-      pagination: true
+      pagination: true,
+      rowClassRules: {
+        'rowMatchUpdated': '(data["*UPD*"] !== undefined) && (data["*UPD*"] === "Y")',
+        'rowMatchClear': '(data["*UPD*"] !== undefined) && (data["*UPD*"] === "")'
+      }
     };
 
     // create inline worker
@@ -331,6 +336,13 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
       // tracking for data parsing
       if (mmsiFound) {
+        this.rowHeaders.push("*UPD*");
+        this.columnDefinitions.push({
+          field: "*UPD*",
+          sortable: true,
+          filter: false
+        });
+
         this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true })
       }
       this.columnTracking = [titleIndex, latIndex, lonIndex];
@@ -362,6 +374,11 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
   private getLayerInfo() {
     this.setQueryStatus("layer info query...");
+
+    // clear current update indicator
+    this.rowData.forEach((row) => {
+      this.rowData["*UPD*"] = "";
+    });
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.layer.url.split("?");
@@ -469,12 +486,16 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
             this.setQueryStatus("layer data query...");
             // split data in 20 records at a time
+            this.mmsiListBatch = [];
+
             let listLength = this.mmsiList.length;
             let listBatchSize = Math.ceil(listLength / 15);
             let mmsiList = [...this.mmsiList];
-            for(let i=0; i<listBatchSize; i++) {
+            for (let i = 0; i < listBatchSize; i++) {
               this.mmsiListBatch.push(mmsiList.splice(0, 15));
             }
+            
+            this.mmsiListBatchIndex = 0;
             this.retrieveLayerData();
           });
         } else {
@@ -505,82 +526,96 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   private retrieveLayerData() {
     this.setQueryStatus("data query...");
 
-    // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
-    let url = this.layerBaseUrl + "/query?" + "f=json" +
-      "&returnGeometry=true" +
-      "&returnQueryGeometry=true" +
-      "&returnExceededLimitFeatures=true" +
-      "&outFields=*" +
-      //"&orderByFields=" + this.layerIDField +
-      //"&resultOffset=" + this.layerOffset +
-      //"&resultRecordCount=" + this.layerMaxRecords +
-      "&outSR=4326";
+    if (this.mmsiListBatchIndex < this.mmsiListBatch.length) {
+      // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
+      let url = this.layerBaseUrl + "/query?" + "f=json" +
+        "&returnGeometry=true" +
+        "&returnQueryGeometry=true" +
+        "&returnExceededLimitFeatures=true" +
+        "&outFields=*" +
+        //"&orderByFields=" + this.layerIDField +
+        //"&resultOffset=" + this.layerOffset +
+        //"&resultRecordCount=" + this.layerMaxRecords +
+        "&outSR=4326";
 
-    // add field filters if required
-    url += "&where=" + this.layerMMSIFieldName + "+IN+" + 
-      encodeURIComponent("(" + this.mmsiListBatch.join(",") + ")");
+      // add field filters if required
+      let batch = this.mmsiListBatch[this.mmsiListBatchIndex];
+      this.mmsiListBatchIndex++;
 
-    if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
-      url += "&token=" + this.layerToken;
-    }
-    let urlRecorddata: Observable<any>;
+      url += "&where=" + this.layerMMSIFieldName + "+IN+" +
+        encodeURIComponent("(" + batch.join(",") + ")");
 
-    this.connectionFailure = true;
-    if (!this.credentialsRequired) {
-      urlRecorddata = this.http
-        .get<any>(url, { responseType: 'json' })
-        .pipe(
-          retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError)/*, tap(console.log)*/);
-    } else {
-      urlRecorddata = this.http
-        .get<any>(url, { responseType: 'json', withCredentials: true })
-        .pipe(
-          retryWhen(errors => errors.pipe(delay(2000), take(2))),
-          catchError(this.handleError)/*, tap(console.log)*/);
-    }
+      if ((this.layerToken !== undefined) && (this.layerToken !== null) && (this.layerToken !== "")) {
+        url += "&token=" + this.layerToken;
+      }
+      let urlRecorddata: Observable<any>;
 
-    let urlRecordSubscription = urlRecorddata.subscribe((model) => {
-      urlRecordSubscription.unsubscribe();
+      this.connectionFailure = true;
+      if (!this.credentialsRequired) {
+        urlRecorddata = this.http
+          .get<any>(url, { responseType: 'json' })
+          .pipe(
+            retryWhen(errors => errors.pipe(delay(2000), take(2))),
+            catchError(this.handleError)/*, tap(console.log)*/);
+      } else {
+        urlRecorddata = this.http
+          .get<any>(url, { responseType: 'json', withCredentials: true })
+          .pipe(
+            retryWhen(errors => errors.pipe(delay(2000), take(2))),
+            catchError(this.handleError)/*, tap(console.log)*/);
+      }
 
-      this.connectionFailure = false;
-      this.setQueryStatus("data received, processing...");
+      let urlRecordSubscription = urlRecorddata.subscribe((model) => {
+        urlRecordSubscription.unsubscribe();
 
-      // send notification to parent that partial result was returned
-      if (model.features) {
-        let recordCount = model.features.length;
-        console.log("layer data received:" + recordCount);
+        this.connectionFailure = false;
+        this.setQueryStatus("data received, processing...");
 
-        this.mmsiListBatch.slice(0);
-        if (this.mmsiListBatch.length === 0) {
-          console.log("", "reset");
-        } else {
+        // send notification to parent that partial result was returned
+        if (model.features) {
+          let recordCount = model.features.length;
+          console.log("layer data received:" + recordCount);
+
           window.setTimeout(() => {
             this.retrieveLayerData();
-          }, 100);
+          }, 50);
+
+          // update the grid data
+          let index = 0;
+          model.features.forEach((feature) => {
+            index = this.mmsiList.indexOf("'" + feature.attributes[this.layerMMSIFieldName] + "'");
+            if (index >= 0) {
+              this.rowData[index][this.columnTracking[1]] = feature.geometry.y;
+              this.rowData[index][this.columnTracking[2]] = feature.geometry.x;
+              this.rowData[index]["*UPD*"] = "Y";
+            }
+          });
+        } else {
+          this.setQueryStatus("data received, error... /code-" + model.error.code + "/" + model.error.message, "error");
+          alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
         }
-      } else {
-        this.setQueryStatus("data received, error... /code-" + model.error.code + "/" + model.error.message, "error");
-        alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
-      }
-    },
-    error => {
-      console.log('HTTP Error', error);
-      this.setQueryStatus("data query, error/" + error, "error");
-    },
-    () => {
-      if (!this.connectionFailure) {
-        //console.log('HTTP request completed.');
-        this.setQueryStatus("", "reset");
-      } else if (!this.credentialsRequired) {
-        this.credentialsRequired = true;
-        this.getLayerInfo();
-      } else {
-        this.setQueryStatus("data query error (external)...", "error");
-        window.alert('OPS Tracks Widget: HTTP other layer error; not trapped.\n' +
-          this.layerBaseUrl);
-      }
-    });
+      },
+        error => {
+          console.log('HTTP Error', error);
+          this.setQueryStatus("data query, error/" + error, "error");
+        },
+        () => {
+          if (!this.connectionFailure) {
+            //console.log('HTTP request completed.');
+            this.setQueryStatus("", "reset");
+          } else if (!this.credentialsRequired) {
+            this.credentialsRequired = true;
+            this.getLayerInfo();
+          } else {
+            this.setQueryStatus("data query error (external)...", "error");
+            window.alert('OPS Tracks Widget: HTTP other layer error; not trapped.\n' +
+              this.layerBaseUrl);
+          }
+        });
+    } else {
+      this.agGrid.api.setRowData(this.rowData);
+      this.setQueryStatus("", "reset");
+    }
   }
 
   private updateGridData(filterText?: string) {
@@ -614,22 +649,22 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           record[header] = value[index++];
 
           if (header.toLowerCase() === "mmsi") {
-            this.mmsiList.push(record[header]);
-          } else 
-          // convert lat/lon if needed
-          if ((this.columnTracking[1] !== this.columnTracking[2]) &&
-            ((header === this.columnTracking[1]) || (header === this.columnTracking[2]))) {
-            coordinates = record[header] + "";
-            count = this.jsutils.countChars(coordinates, " ");
+            this.mmsiList.push("'" + record[header] + "'");
+          } else
+            // convert lat/lon if needed
+            if ((this.columnTracking[1] !== this.columnTracking[2]) &&
+              ((header === this.columnTracking[1]) || (header === this.columnTracking[2]))) {
+              coordinates = record[header] + "";
+              count = this.jsutils.countChars(coordinates, " ");
 
-            // dms to dd conversion when 2, DMM when 1
-            if (count === 2) {
-              record[header] = this.jsutils.convertDMSDD(coordinates);
-            } else if (count === 1) {
-              record[header] = this.jsutils.convertDDMDD(coordinates);
+              // dms to dd conversion when 2, DMM when 1
+              if (count === 2) {
+                record[header] = this.jsutils.convertDMSDD(coordinates);
+              } else if (count === 1) {
+                record[header] = this.jsutils.convertDDMDD(coordinates);
+              }
+
             }
-
-          }
         });
 
         if (validRecord) {

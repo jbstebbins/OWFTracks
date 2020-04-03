@@ -59,6 +59,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   searchValue: string = "";
   rowHeaders: any[] = [];
   rowData: any[] = [];
+  rowDataUpdate: any[] = [];
   columnTracking: any[] = [-1, -1, -1];
   filterActive: boolean = false;
   mmsiList: string[] = [];
@@ -92,6 +93,14 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   layerIDField: string = "";
   layerAdvancedFeatures: any;
   layerMMSIFieldName = "mmsi";
+
+  getRowStyle = function(params) {
+      if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
+        return { 'background-color' : 'rgb(110, 165, 179)' };
+      } else {
+        return { 'background-color' : 'white' };
+      }
+  }
 
   constructor(private configService: ConfigService,
     private http: HttpClient,
@@ -158,11 +167,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       context: {
         componentParent: this
       },
-      pagination: true,
-      rowClassRules: {
-        'rowMatchUpdated': '(data["*UPD*"] !== undefined) && (data["*UPD*"] === "Y")',
-        'rowMatchClear': '(data["*UPD*"] !== undefined) && (data["*UPD*"] === "")'
-      }
+      pagination: true
     };
 
     // create inline worker
@@ -377,8 +382,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
     // clear current update indicator
     this.rowData.forEach((row) => {
-      this.rowData["*UPD*"] = "";
+      row["*UPD*"] = "";
     });
+    this.gridApi.redrawRows();
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.layer.url.split("?");
@@ -494,8 +500,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             for (let i = 0; i < listBatchSize; i++) {
               this.mmsiListBatch.push(mmsiList.splice(0, 15));
             }
-            
+
             this.mmsiListBatchIndex = 0;
+            this.rowDataUpdate = [];
             this.retrieveLayerData();
           });
         } else {
@@ -584,10 +591,14 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           let index = 0;
           model.features.forEach((feature) => {
             index = this.mmsiList.indexOf("'" + feature.attributes[this.layerMMSIFieldName] + "'");
-            if (index >= 0) {
+
+            if (index !== -1) {
+              console.log(index, this.mmsiList[index], feature.attributes[this.layerMMSIFieldName]);
               this.rowData[index][this.columnTracking[1]] = feature.geometry.y;
               this.rowData[index][this.columnTracking[2]] = feature.geometry.x;
               this.rowData[index]["*UPD*"] = "Y";
+
+              this.rowDataUpdate.push(this.rowData[index]);
             }
           });
         } else {
@@ -613,7 +624,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           }
         });
     } else {
-      this.agGrid.api.setRowData(this.rowData);
+      this.agGrid.api.updateRowData({ update: this.rowDataUpdate });
+      this.rowDataUpdate = [];
       this.setQueryStatus("", "reset");
     }
   }

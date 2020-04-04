@@ -60,7 +60,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   rowHeaders: any[] = [];
   rowData: any[] = [];
   rowDataUpdate: any[] = [];
-  columnTracking: any[] = [-1, -1, -1];
+  columnTracking: any[] = [-1, -1, -1, -1, -1, -1];       // title/name, lat, lon, course, bearing, speed
   filterActive: boolean = false;
   mmsiList: string[] = [];
   mmsiListBatch: any[] = [];
@@ -93,13 +93,16 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   layerIDField: string = "";
   layerAdvancedFeatures: any;
   layerMMSIFieldName = "mmsi";
+  layerCOURSEFieldName = "";
+  layerBEARINGFieldName = "";
+  layerSPEEDFieldName = "";
 
-  getRowStyle = function(params) {
-      if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
-        return { 'background-color' : 'rgb(110, 165, 179)' };
-      } else {
-        return { 'background-color' : 'white' };
-      }
+  getRowStyle = function (params) {
+    if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
+      return { 'background-color': 'rgb(110, 165, 179)' };
+    } else {
+      return { 'background-color': 'white' };
+    }
   }
 
   constructor(private configService: ConfigService,
@@ -127,7 +130,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             }
 
             this.gridApi.setQuickFilter(this.searchValue);
-          } else if (payload.action === "CSV PLOT ON MAP") {
+          } else if ((payload.action === "CSV PLOT ON MAP") || (payload.action === "CSV SAVE TO CATALOG")) {
             let tracks = [];
             if (this.filterActive) {
               let selectedRows = this.gridApi.getSelectedRows();
@@ -147,12 +150,20 @@ export class CsvGridComponent implements OnInit, OnDestroy {
               }
             }
 
-            this.worker.postMessage({
+            let workerData = {
               overlayId: "CSV-Viewer",
               filename: this.parentFileName, tracks: tracks,
               showLabels: payload.value.showLabels, color: payload.value.color,
-              columnTracking: this.columnTracking
-            });
+              columnTracking: this.columnTracking, mmsiEnabled: (this.layerMMSIFieldName !== ""),
+              baseUrl: this.configService.getBaseHref(),
+              saveToCatalog: false
+            };
+
+            if (payload.action === "CSV SAVE TO CATALOG") {
+              workerData.saveToCatalog = true;
+            }
+
+            this.worker.postMessage(workerData);
           }
       });
   }
@@ -195,8 +206,10 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       };
 
       const formatKml = (data) => {
-        let kmlStyles =
-          "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> ";
+        let kmlStyles = "";
+        kmlStyles = "      <Style id=\"csv_style\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+          "<Style id=\"csv_notfound\"><IconStyle><scale>.8</scale><color>" + data.color + "</color></IconStyle><LabelStyle><scale>0.5</scale></LabelStyle></Style> " +
+          "<Style id=\"csv_found\"><IconStyle><color>" + data.color + "</color><scale>1.0</scale><Icon><href>" + data.baseUrl + "/assets/images/aisSquare.png</href></Icon></IconStyle></Style> ";
 
         plotMessage.overlayId = data.overlayId;
         plotMessage.featureId = data.filename;
@@ -223,8 +236,23 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             latY = track[data.columnTracking[1]];
           }
           kmlPayload += "<Placemark> " +
-            "<name>" + track[data.columnTracking[0]] + "</name> " +
-            "<styleUrl>#csv_style</styleUrl> " +
+            "<name>" + track[data.columnTracking[0]] + "</name> ";
+
+          if (!data.mmsiEnabled) {
+            kmlPayload += "<styleUrl>#csv_style</styleUrl> ";
+          } else {
+            if ((track["*UPD*"] !== undefined) && (track["*UPD*"] === "Y")) {
+              kmlPayload += "<styleUrl>#csv_found</styleUrl> ";
+              if ((data.columnTracking[3] !== -1) && (track[data.columnTracking[3]] !== undefined) &&
+                (track[data.columnTracking[3]] !== null) && (track[data.columnTracking[3]] !== "")) {
+                kmlPayload += "<Style><IconStyle><heading>" + track[data.columnTracking[3]] + "</heading></IconStyle></Style>";
+              }
+            } else {
+              kmlPayload += "<styleUrl>#csv_notfound</styleUrl> ";
+            }
+          }
+
+          kmlPayload +=
             "<Point><coordinates>" + lonX + "," + latY + ",0" + "</coordinates></Point> ";
 
           kmlPayload += "<ExtendedData>";
@@ -248,7 +276,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         // and it can't see methods of this class
         // @ts-ignore
         postMessage({
-          status: "kml formatting complete", kml: plotMessage
+          status: "kml formatting complete", kml: plotMessage, saveToCatalog: data.saveToCatalog
         });
 
         plotMessage.feature = "";
@@ -263,6 +291,10 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
     this.worker.onmessage().subscribe((event) => {
       this.owfApi.sendChannelRequest("map.feature.plot", event.data.kml);
+
+      if (event.data.saveToCatalog) {
+        this.owfApi.sendChannelRequest("catalog.favorite.add", event.data.kml);
+      }
 
       this.setQueryStatus("", "reset");
     });
@@ -296,9 +328,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       let index = 0;
       let header = this.parentData[0];
 
-      let titleIndex = -1, latIndex = -1, lonIndex = -1;
+      let titleIndex = -1, latIndex = -1, lonIndex = -1, courseIndex = -1, bearingIndex = -1, speedIndex = -1;
       let itemTemp = "", geom;
-      let mmsiFound = false;
+      let mmsiFound = false, updFound = false;
       header.forEach((item) => {
         if (index < 50) {
           item = item.replace(/[^0-9a-z -_]/gi, '').substring(0, 20);
@@ -314,6 +346,14 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           // set column tracking for parsing
           if ((itemTemp === "title") || (itemTemp === "name")) {
             titleIndex = item;
+          } else if (itemTemp === "course") {
+            courseIndex = item;
+          } else if (itemTemp === "bearing") {
+            bearingIndex = item;
+          } else if (itemTemp === "speed") {
+            speedIndex = item;
+          } else if (itemTemp === "*upd*") {
+            updFound = true;
           } else if (((itemTemp.includes("title")) || (itemTemp.includes("name"))) &&
             (titleIndex === -1)) {
             titleIndex = item;
@@ -340,17 +380,17 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       });
 
       // tracking for data parsing
-      if (mmsiFound) {
+      if (mmsiFound && !updFound) {
         this.rowHeaders.push("*UPD*");
         this.columnDefinitions.push({
           field: "*UPD*",
           sortable: true,
-          filter: false
+          filter: true
         });
-
+      } else if (mmsiFound) {
         this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true })
       }
-      this.columnTracking = [titleIndex, latIndex, lonIndex];
+      this.columnTracking = [titleIndex, latIndex, lonIndex, courseIndex, bearingIndex, speedIndex];
 
       // remove header row from imported data
       this.parentData.splice(0, 1);
@@ -451,10 +491,20 @@ export class CsvGridComponent implements OnInit, OnDestroy {
 
         // check if layerFields have mmsi
         let mmsiFound = false;
+        this.layerMMSIFieldName = "";
+        this.layerCOURSEFieldName = "";
+        this.layerBEARINGFieldName = "";
+        this.layerSPEEDFieldName = "";
         this.layerFields.forEach((field) => {
           if (field.name.toLowerCase() === "mmsi") {
             mmsiFound = true;
             this.layerMMSIFieldName = field.name;
+          } else if (field.name.toLowerCase() === "course") {
+            this.layerCOURSEFieldName = field.name;
+          } else if (field.name.toLowerCase() === "bearing") {
+            this.layerBEARINGFieldName = field.name;
+          } else if (field.name.toLowerCase() === "speed") {
+            this.layerSPEEDFieldName = field.name;
           }
         });
 
@@ -531,7 +581,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   }
 
   private retrieveLayerData() {
-    this.setQueryStatus("data query...");
+    this.setQueryStatus("data query... (" + this.mmsiListBatchIndex + " of " + this.mmsiListBatch.length + ")");
 
     if (this.mmsiListBatchIndex < this.mmsiListBatch.length) {
       // https://developers.arcgis.com/rest/services-reference/query-map-service-layer-.htm
@@ -593,10 +643,20 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             index = this.mmsiList.indexOf("'" + feature.attributes[this.layerMMSIFieldName] + "'");
 
             if (index !== -1) {
-              console.log(index, this.mmsiList[index], feature.attributes[this.layerMMSIFieldName]);
               this.rowData[index][this.columnTracking[1]] = feature.geometry.y;
               this.rowData[index][this.columnTracking[2]] = feature.geometry.x;
               this.rowData[index]["*UPD*"] = "Y";
+
+              // update course, bearing, speed if needed and exist
+              if ((this.columnTracking[3] !== -1) && (this.layerCOURSEFieldName !== "")) {
+                this.rowData[index][this.columnTracking[3]] = feature.attributes[this.layerCOURSEFieldName];
+              }
+              if ((this.columnTracking[4] !== -1) && (this.layerBEARINGFieldName !== "")) {
+                this.rowData[index][this.columnTracking[4]] = feature.attributes[this.layerBEARINGFieldName];
+              }
+              if ((this.columnTracking[5] !== -1) && (this.layerSPEEDFieldName !== "")) {
+                this.rowData[index][this.columnTracking[5]] = feature.attributes[this.layerSPEEDFieldName];
+              }
 
               this.rowDataUpdate.push(this.rowData[index]);
             }
@@ -708,7 +768,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           overlayId: "TMP-Viewer",
           filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"),
           tracks: tracks,
-          color: "#000000", columnTracking: this.columnTracking
+          color: "#000000", columnTracking: this.columnTracking, mmsiEnabled: (this.layerMMSIFieldName !== ""),
+          baseUrl: this.configService.getBaseHref()
         });
 
         window.setTimeout(() => {

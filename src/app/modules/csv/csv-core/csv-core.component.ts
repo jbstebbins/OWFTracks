@@ -346,7 +346,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleShareClick($event: any): void {
-    console.log($event);
+    this.notificationService.publisherAction({ action: 'CSV SAVE TO CATALOG', value: { showLabels: this.showLabels, color: this.color } });
   }
 
   isValidCSVFile(file: any) {

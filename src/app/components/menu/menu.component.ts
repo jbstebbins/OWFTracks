@@ -42,7 +42,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   notifyMenu(event) {
-    this.notificationService.subscriberAction({action:event.item.label});
+    this.notificationService.publisherAction({action:event.item.label});
     this.searchText = event.item.label;
     //console.log(`${event.item.label}, pressed from MenuComponent`);
   }
@@ -55,7 +55,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
 
     //console.log(`search value: ${value}`);
-    this.notificationService.subscriberAction({action:"search", data:value});
+    this.notificationService.publisherAction({action:"search", data:value});
   }
 
 }

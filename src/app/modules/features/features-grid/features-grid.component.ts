@@ -518,7 +518,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   sendNotification(payload) {
-    this.notificationService.subscriberAction(payload);
+    this.notificationService.publisherAction(payload);
     //console.log(`${payload.action}, pressed from features-grid.component`);
   }
 

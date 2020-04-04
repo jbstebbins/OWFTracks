@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, EMPTY, forkJoin } from 'rxjs';
-import { catchError, map, filter, switchMap, tap } from 'rxjs/operators';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, Observer, of, Subject, EMPTY, Subscription, interval, empty, throwError, forkJoin } from 'rxjs';
+import { catchError, map, filter, startWith, switchMap, tap, retry, retryWhen, delay, take } from 'rxjs/operators';
+
+import { HttpClient, HttpHeaders, HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 import * as _ from 'lodash';
 
+import { ActionNotificationService } from '../services/action-notification.service';
 import { ConfigModel } from '../models/config-model';
 
 const httpOptions = {
@@ -22,7 +24,8 @@ export class ConfigService {
 
 	memoryPersistence = {};
 
-	constructor(private http: HttpClient) {
+	constructor(private http: HttpClient,
+		private notificationService: ActionNotificationService) {
 		this.retrieveConfig();
 	}
 
@@ -46,6 +49,8 @@ export class ConfigService {
 							catchError(this.handleError('retrieveConfig', []))/*, tap(console.log)*/));
 				}
 			});
+
+			this.notificationService.publisherAction({ action: 'CONFIG READY', value: "" });
 
 			// make sure all are done and then return the results
 			let servicesObservable:Observable<any[]> = forkJoin(responseCalls);

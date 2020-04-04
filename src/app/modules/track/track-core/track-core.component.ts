@@ -35,7 +35,7 @@ export class TrackCoreComponent implements OnInit, OnDestroy {
   }
 
   sendNotification(payload) {
-    this.notificationService.subscriberAction(payload);
+    this.notificationService.publisherAction(payload);
     console.log(`${payload.action}, pressed from track-core.component`);
   }
 

@@ -92,7 +92,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   layerMaxRecords: number = 1000;
   layerIDField: string = "";
   layerAdvancedFeatures: any;
-  layerMMSIFieldName = "mmsi";
+  layerMMSIFieldName = "";
   layerCOURSEFieldName = "";
   layerBEARINGFieldName = "";
   layerSPEEDFieldName = "";
@@ -387,7 +387,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           sortable: true,
           filter: true
         });
-      } else if (mmsiFound) {
+      }
+      if (mmsiFound) {
         this.notificationService.publisherAction({ action: 'CSV LAYERSYNC ENABLED', value: true })
       }
       this.columnTracking = [titleIndex, latIndex, lonIndex, courseIndex, bearingIndex, speedIndex];

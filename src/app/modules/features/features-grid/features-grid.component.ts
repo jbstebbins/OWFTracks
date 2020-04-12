@@ -308,6 +308,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       this.rowGeomertyData = event.data.geomertyData;
       // this.agGrid.api.setRowData(this.rowData);
 
+      // autosize all columns
+      let allColumnIds = [];
+      this.gridColumnApi.getAllColumns().forEach(function (column) {
+        allColumnIds.push(column.colId);
+      });
+      this.gridColumnApi.autoSizeColumns(allColumnIds, false);
+
       this.setQueryStatus("", "reset");
     });
 
@@ -483,7 +490,8 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
             field: item.name,
             sortable: true,
             filter: true,
-            dndSource: (item.name === this.layerIDField)
+            dndSource: (item.name === this.layerIDField),
+            resizable: true
           };
 
           if (item.name === this.layerIDField) {

@@ -32,7 +32,7 @@
               "./node_modules/bootstrap/dist/css/bootstrap-theme.min.css",
               "./node_modules/jquery-ui-dist/jquery-ui.theme.min.css",
               "./node_modules/ag-grid-community/dist/styles/ag-grid.min.css",
-              "./node_modules/ag-grid-community/dist/styles/ag-theme-balham.css",
+              "./node_modules/ag-grid-community/dist/styles/ag-theme-balham.min.css",
               "src/assets/themes/bootstrap.cerulean.min.css"
             ],
             "scripts": [

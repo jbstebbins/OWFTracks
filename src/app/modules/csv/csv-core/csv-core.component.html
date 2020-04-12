@@ -5,34 +5,44 @@
       <span *ngIf="loadComponent" style="float: left;height: 22px;display: flex;">
         <button pButton type="button" icon="pi pi-refresh" iconPos="left" styleClass="ui-button-info"
           (click)="handleResetClick($event)" style="height: 23px;"></button>
-        <span *ngIf="loadMMSISync" style="display:flex; white-space:nowrap;">
+        <span *ngIf="isDataValid" style="display:flex; white-space:nowrap;">
           <button pButton type="button" icon="pi pi-share-alt" iconPos="left" styleClass="ui-button-info"
             (click)="handleShareClick($event)" style="height: 23px;"></button>
+        </span>
+        <span *ngIf="loadMMSISync" style="display:flex; white-space:nowrap;">
           <div style="height: 22px;position:fixed;z-index:1003;left: 75px;">Layer:
             <p-dropdown #lyrOptions id="lyrOptions" [options]="layers" [(ngModel)]="layerSelected" optionLabel="title"
               (onChange)="selectedLayer($event)"></p-dropdown>
             <div #layerRefresh id="layerRefresh" [ngStyle]="divLayerRefreshCss" (click)="refreshLayer($event)">
               <img src="{{layerRefreshImageSrc}}" title="Refresh layer..."
-                style="width:20px;height:20px;padding:1px;margin-left:5px;">
+                style="width:18px;height:18px;padding:1px;margin-left:5px;">
             </div>
           </div>
         </span>
       </span>
       <div *ngIf="loadComponent">
         <span *ngIf="isDataValid" style="float: right;height: 22px;display: flex;">
-          <p-checkbox [(ngModel)]="showLabels" binary="true" title="show labels?"></p-checkbox>
+          <div #layerZoom id="layerZoom" [ngStyle]="divLayerZoomCss" (click)="handleZoomClick($event)">
+            <img src="{{layerZoomImageSrc}}" title="Zoom to layer..."
+              style="width:20px;height:20px;padding:1px;">
+          </div>
+          <div #layerLabels id="layerLabels" [ngStyle]="divLayerLabelCss" (click)="handleLabelClick($event)">
+            <img src="{{layerLabelImageSrc}}" title="Show labels on layer..."
+              style="width:20px;height:20px;padding:1px;">
+          </div>
           <span #colorPickerSpan (click)="colorPickerSpanClicked($event)">
             <p-colorPicker #colorPicker [(ngModel)]="color" [ngStyle]="{'height':'22px'}"></p-colorPicker>&nbsp;&nbsp;
           </span>
           <button pButton type="button" icon="pi pi-globe" iconPos="left" styleClass="ui-button-info"
-            (click)="handleClick($event)" style="height: 23px;"></button>
+            (click)="handleMapClick($event)" [ngStyle]="divLayerMapCss"></button>
+          <button pButton *ngIf="recordsSelected > 0" type="button" style="height: 23px;">{{recordsSelected}}</button>
         </span>
         <span style="float:right;margin-right:10px;">Search: <input type="text" #csvSearch name="Search CSV"
-            id="csvSearch" [(ngModel)]="searchText" (keydown)="searchListener($event)" title="Enter Search Text..."
+            id="csvSearch" [(ngModel)]="searchValue" (keydown)="searchListener($event)" title="Enter Search Text..."
             style="color: black;" />
           <div #layerRefresh id="layerRefresh" [ngStyle]="divCSVRefreshCss" (click)="refreshCSV($event)">
             <img src="{{layerSearchImageSrc}}" title="Clear filters..."
-              style="width:20px;height:20px;padding:1px;margin-left:5px;">
+              style="width:18px;height:18px;padding:1px;margin-left:5px;margin-top:-2px;">
           </div>
         </span>
       </div>

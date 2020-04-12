@@ -65,6 +65,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   mmsiList: string[] = [];
   mmsiListBatch: any[] = [];
   mmsiListBatchIndex: 0;
+  selectedNodesCache: any[] = [];
 
   domLayout = "normal";
   rowSelection = "multiple";
@@ -98,8 +99,14 @@ export class CsvGridComponent implements OnInit, OnDestroy {
   layerSPEEDFieldName = "";
 
   getRowStyle = function (params) {
-    if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
-      return { 'background-color': 'rgb(110, 165, 179)' };
+    if (params.node.selected) {
+      if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
+        return { 'background-color': '#3CD94F' };
+      } else {
+        return { 'background-color': '#D88F36' };
+      }
+    } else if ((params.data["*UPD*"] !== undefined) && (params.data["*UPD*"] === "Y")) {
+      return { 'background-color': '#258731' };
     } else {
       return { 'background-color': 'white' };
     }
@@ -123,6 +130,9 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             this.gridApi.deselectAll();
             this.gridApi.deselectAllFiltered();
 
+            this.gridApi.redrawRows({ rowNodes: this.selectedNodesCache });
+            this.selectedNodesCache = this.gridApi.getSelectedNodes();
+        
             if (this.searchValue !== "") {
               this.filterActive = true;
             } else {
@@ -156,7 +166,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
               showLabels: payload.value.showLabels, color: payload.value.color,
               columnTracking: this.columnTracking, mmsiEnabled: (this.layerMMSIFieldName !== ""),
               baseUrl: this.configService.getBaseHref(),
-              saveToCatalog: false
+              saveToCatalog: false, showZoom: payload.value.showZoom
             };
 
             if (payload.action === "CSV SAVE TO CATALOG") {
@@ -215,6 +225,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         plotMessage.featureId = data.filename;
         plotMessage.name = data.filename;
         plotMessage.params.showLabels = data.showLabels;
+        plotMessage.zoom = data.showZoom;
+        plotMessage.params.zoom = data.showZoom;
 
         // format and return to main thread
         let kmlPayload = "";
@@ -340,7 +352,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           this.columnDefinitions.push({
             field: item,
             sortable: true,
-            filter: true
+            filter: true,
+            resizable: true
           });
 
           // set column tracking for parsing
@@ -385,7 +398,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         this.columnDefinitions.push({
           field: "*UPD*",
           sortable: true,
-          filter: true
+          filter: true,
+          resizable: true
         });
       }
       if (mmsiFound) {
@@ -405,6 +419,13 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     this.gridColumnApi = params.columnApi;
 
     this.updateGridData();
+
+    // autosize all columns
+    let allColumnIds = [];
+    this.gridColumnApi.getAllColumns().forEach(function (column) {
+      allColumnIds.push(column.colId);
+    });
+    this.gridColumnApi.autoSizeColumns(allColumnIds, false);
 
     if ((this.columnTracking[0] === -1) ||
       (this.columnTracking[1] === -1) || (this.columnTracking[2] === -1)) {
@@ -632,7 +653,6 @@ export class CsvGridComponent implements OnInit, OnDestroy {
         // send notification to parent that partial result was returned
         if (model.features) {
           let recordCount = model.features.length;
-          console.log("layer data received:" + recordCount);
 
           window.setTimeout(() => {
             this.retrieveLayerData();
@@ -754,7 +774,11 @@ export class CsvGridComponent implements OnInit, OnDestroy {
     return "[" + params.value.toLocaleString() + "]";
   }
 
-  onRowClicked() {
+  onRowClicked($event) {
+    this.selectedNodesCache.push($event.node);
+    this.gridApi.redrawRows({ rowNodes: this.selectedNodesCache });
+    this.selectedNodesCache = this.gridApi.getSelectedNodes();
+
     if ((this.columnTracking[0] === -1) ||
       (this.columnTracking[1] === -1) || (this.columnTracking[2] === -1)) {
     } else {
@@ -763,6 +787,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
       let tracks;
       if (selectedRows.length > 0) {
         tracks = selectedRows;
+        this.notificationService.publisherAction({ action: 'CSV SELECTED COUNT', value: selectedRows.length });
 
         let track = tracks[0];
         this.worker.postMessage({
@@ -770,7 +795,8 @@ export class CsvGridComponent implements OnInit, OnDestroy {
           filename: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_"),
           tracks: tracks,
           color: "#000000", columnTracking: this.columnTracking, mmsiEnabled: (this.layerMMSIFieldName !== ""),
-          baseUrl: this.configService.getBaseHref()
+          baseUrl: this.configService.getBaseHref(),
+          saveToCatalog: false, showZoom: true
         });
 
         window.setTimeout(() => {
@@ -778,7 +804,7 @@ export class CsvGridComponent implements OnInit, OnDestroy {
             overlayId: "TMP-Viewer",
             featureId: (this.parentFileName + "_" + track[this.columnTracking[0]]).replace(/ /gi, "_")
           });
-        }, 5000);
+        }, 10000);
       }
     }
   }

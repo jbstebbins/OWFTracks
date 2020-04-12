@@ -483,22 +483,22 @@ export class CotMinotaurComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitions = [
       { field: 'id', hide: true },
-      { field: 'featureType', sortable: true },
-      { field: 'name', sortable: true, filter: true },
-      { field: 'type', sortable: true, filter: true },
-      { field: 'category', sortable: true, filter: true },
-      { field: 'class', sortable: true, filter: true },
-      { field: 'alertLevel', sortable: true, filter: true },
-      { field: 'threat', sortable: true, filter: true },
-      { field: 'dimension', sortable: true },
-      { field: 'flag', sortable: true, filter: true },
-      { field: 'speed', sortable: true },
-      { field: 'dtg', sortable: true },
-      { field: 'altitude', sortable: true },
-      { field: 'course', hide: true },
-      { field: 'lat', hide: true },
-      { field: 'lon', hide: true },
-      { field: 'classification', filter: true }
+      { field: 'featureType', sortable: true, resizable: true },
+      { field: 'name', sortable: true, filter: true, resizable: true },
+      { field: 'type', sortable: true, filter: true, resizable: true },
+      { field: 'category', sortable: true, filter: true, resizable: true },
+      { field: 'class', sortable: true, filter: true, resizable: true },
+      { field: 'alertLevel', sortable: true, filter: true, resizable: true },
+      { field: 'threat', sortable: true, filter: true, resizable: true },
+      { field: 'dimension', sortable: true, resizable: true },
+      { field: 'flag', sortable: true, filter: true, resizable: true },
+      { field: 'speed', sortable: true, resizable: true },
+      { field: 'dtg', sortable: true, resizable: true },
+      { field: 'altitude', sortable: true, resizable: true },
+      { field: 'course', hide: true, resizable: true },
+      { field: 'lat', hide: true, resizable: true },
+      { field: 'lon', hide: true, resizable: true },
+      { field: 'classification', filter: true, resizable: true }
     ];
 
     return this.columnDefinitions;

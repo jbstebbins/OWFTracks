@@ -57,8 +57,10 @@ export class UserCoreService {
           this.owfUrl = configService.configModel.Urls["owfServer"];
 
           // get all user info needed
-          this.retrieveUserInfo();
-          this.retrieveUserUUID();
+          window.setTimeout(() => {
+            this.retrieveUserInfo();
+            this.retrieveUserUUID();
+          }, 10);
         }
       });
   }
@@ -81,6 +83,7 @@ export class UserCoreService {
         this.notificationService.publisherAction({ action: 'USERINFO READY - USER', value: this.user });
 
         this.retrieveUserSummary();
+        this.retrieveUserGroups();
       });
     }
   }
@@ -180,8 +183,12 @@ export class UserCoreService {
       this.notificationService.publisherAction({ action: 'USERINFO READY - SUMMARY', value: this.summary });
     });
   }
-  /*
-  retrieveUserGroups(id: string): Observable<UserGroupModel[]> {
+
+  getUserGroups() {
+    return this.groups;
+  }
+
+  retrieveUserGroups() {
     const httpOptions = {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
@@ -189,15 +196,18 @@ export class UserCoreService {
       })
     };
 
-    this.groups = this.http
-      .get<UserGroupModel[]>(this.owfUrl + '/group?user_id=' + id, httpOptions)
+    this.groupsObservable = this.http
+      .get<UserGroupModel[]>(this.owfUrl + '/group?user_id=' + this.user.id, httpOptions)
       .pipe(
         catchError(this.handleError('getUserGroups', [])),
         tap(console.log));
 
-    return this.groups;
+    this.groupsObservable.subscribe(groups => {
+      this.groups = groups;
+      this.notificationService.publisherAction({ action: 'USERINFO READY - GROUPS', value: this.groups });
+    });
   }
-
+  /*
   retrieveDashboard(userId: string): Observable<UserDashboardModel> {
     if (this.dashboards === null) {
       this.dashboards = new Observable((observer) => {

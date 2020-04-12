@@ -46,8 +46,32 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   layerSearchImageSrc = "/OWFTracks/assets/images/close.svg";
   layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
 
-  searchText = "";
+  showZoom = true;
+  layerZoomImageSrc = "/OWFTracks/assets/images/zoom_in.svg";
+  divLayerZoomCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '22px',
+    'display': 'inline'
+  }
   showLabels = false;
+  layerLabelImageSrc = "/OWFTracks/assets/images/label.svg";
+  divLayerLabelCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '22px',
+    'display': 'inline',
+    'background-color': 'gray'
+  }
+
+  showMap = false;
+  divLayerMapCss = {
+    'z-index': 3,
+    'width': '22px',
+    'height': '23px',
+    'display': 'inline',
+    'background-color': 'gray'
+  }
 
   jsutils = new jsUtils();
   owfApi = new OwfApi();
@@ -71,7 +95,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   recordsError = 0;
   recordsSelected = 0;
 
-  layers: any[] = [{title: "-- SELECT LAYER --", uuid: null}];
+  layers: any[] = [{ title: "-- SELECT LAYER --", uuid: null }];
   layersDefinition: any[] = [];
   layerSelected: Track;
 
@@ -87,9 +111,11 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
         if (payload.action === "CSV LAYERSYNC ENABLED") {
           this.loadMMSISync = payload.value;
           this.cdr.detectChanges();
-        } else 
-        if (payload.action === "CSV INVALID DATA") {
+        } else if (payload.action === "CSV INVALID DATA") {
           this.isDataValid = !payload.value;
+          this.cdr.detectChanges();
+        } else if (payload.action === "CSV SELECTED COUNT") {
+          this.recordsSelected = payload.value;
           this.cdr.detectChanges();
         }
       });
@@ -101,6 +127,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
     this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/refresh.svg";
     this.layerSearchImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
+    this.layerZoomImageSrc = this.configService.getBaseHref() + "/assets/images/zoom_in.svg";
+    this.layerLabelImageSrc = this.configService.getBaseHref() + "/assets/images/label.svg";
 
     // load directory if provided
     this.getDirectoryLayers();
@@ -255,7 +283,7 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   uploadListener($event: any): void {
     let files = $event.srcElement.files;
     let input = $event.target;
-    
+
     this.loadMMSISync = false;
     if (this.isValidCSVFile(files[0])) {
       let reader = new FileReader();
@@ -330,13 +358,36 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
 
   searchListener($event: any): void {
     if ($event.key === "Enter") {
-      this.searchValue = ($event.target.value + "").trim();
+      this.searchValue = (this.searchValue + "").trim();
       this.notificationService.publisherAction({ action: 'CSV SEARCH VALUE', value: this.searchValue });
+
+      if (this.searchValue === "") {
+        this.recordsSelected = 0;
+      }
     }
   }
 
-  handleClick($event: any): void {
-    this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { showLabels: this.showLabels, color: this.color } });
+  handleZoomClick($event: any): void {
+    this.showZoom = !this.showZoom;
+    this.divLayerZoomCss["background-color"] = (this.showZoom ? "unset" : "gray");
+  }
+
+  handleLabelClick($event: any): void {
+    this.showLabels = !this.showLabels;
+    this.divLayerLabelCss["background-color"] = (this.showLabels ? "unset" : "gray");
+  }
+
+  handleMapClick($event: any): void {
+    this.showMap = !this.showMap;
+    this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
+
+    if (this.showMap) {
+      this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { showLabels: this.showLabels, color: this.color, showZoom: this.showZoom } });
+    } else {
+      this.owfApi.sendChannelRequest("map.feature.unplot", {
+        overlayId: "CSV-Viewer", featureId: this.filename
+      });
+    }
   }
 
   handleResetClick($event: any): void {
@@ -346,7 +397,10 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleShareClick($event: any): void {
-    this.notificationService.publisherAction({ action: 'CSV SAVE TO CATALOG', value: { showLabels: this.showLabels, color: this.color } });
+    this.showMap = true;
+    this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
+    
+    this.notificationService.publisherAction({ action: 'CSV SAVE TO CATALOG', value: { showLabels: this.showLabels, color: this.color, showZoom: this.showZoom } });
   }
 
   isValidCSVFile(file: any) {
@@ -364,8 +418,10 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   refreshCSV($event) {
-    this.searchText = "";
+    this.searchValue = "";
     this.notificationService.publisherAction({ action: 'CSV SEARCH VALUE', value: "" });
+
+    this.recordsSelected = 0;
   }
 
   colorPickerSpanClicked($event) {

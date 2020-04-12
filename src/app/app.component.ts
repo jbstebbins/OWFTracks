@@ -24,15 +24,16 @@ export class AppComponent implements OnInit, OnDestroy {
 		private owfCoreService: UserCoreService) {
 		this.notificationService.publisher$.subscribe(
 			payload => {
-				console.log(`${payload.action}, received by AppComponent`);
+				// console.log(`${payload.action}, received by AppComponent`);
 
 				// check the menu item pressed and take action
 				if ((payload.action === 'USERINFO READY - USER') || (payload.action === 'USERINFO READY - UUID') ||
-					(payload.action === 'USERINFO READY - SUMMARY')) {
+					(payload.action === 'USERINFO READY - SUMMARY') || (payload.action === 'USERINFO READY - GROUPS')) {
 					console.log(payload.action, this.owfContainerService.getContainer());
 					console.log(payload.action, this.owfCoreService.getUser());
 					console.log(payload.action, this.owfCoreService.getUserUUID());
 					console.log(payload.action, this.owfCoreService.getUserSummary());
+					console.log(payload.action, this.owfCoreService.getUserGroups());
 					//console.log(owfCoreService.getUserGroups());
 				} else if (payload.action === "Connect CSV") {
 					this.menuOption = 'ServiceCSV';

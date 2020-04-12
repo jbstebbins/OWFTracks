@@ -560,7 +560,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   private createColumnDefs() {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
-      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true },
+      { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true, resizable: true },
       { field: 'name', hide: true },
       { field: 'service', hide: true },
       { field: 'uuid', hide: true }
@@ -938,7 +938,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             overlayId: "TMP-Locator",
             featureId: ("TMP-Locator" + "_" + record[layer.esriTitleFieldname]).replace(/ /gi, "_")
           });
-        }, 5000);
+        }, 10000);
       } else {
         alert("error retrieving data: code-" + model.error.code + "/" + model.error.message);
       }

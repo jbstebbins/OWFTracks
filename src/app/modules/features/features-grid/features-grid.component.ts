@@ -45,6 +45,14 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
   queryStatusMessage = "please wait, querying services...";
 
+  divAddToWatchlistCss = {
+    'background-color': 'gray',
+    'border': '1px solid #d3d3d3',
+    'float': 'right',
+    'display': 'none'
+  }
+  gridAddToWatchlistImageSrc = "/OWFTracks/assets/images/clear_all.svg";
+
   credentialsRequired: boolean = false;
   connectionFailure: boolean = false;
 
@@ -82,6 +90,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   @Input()
   parentMapView: any;
 
+  confirmDialogVisible: boolean = false;
+  confirmDialogHeader = "Watchlist Update";
+  confirmDialogContent = "Add selected item(s) to watchlist?"
+
   constructor(private configService: ConfigService,
     private notificationService: ActionNotificationService,
     private http: HttpClient) {
@@ -89,6 +101,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
       payload => {
         //console.log(`${payload.action}, received by features-grid.component`);
         if (payload.action === "LYR SEARCH VALUE") {
+          this.divAddToWatchlistCss.display = 'none';
           this.retrieveLayerData(payload.value.field, payload.value.value);
         } else if (payload.action === "LYR MAP REFRESHED") {
           this.parentMapView = payload.value;
@@ -99,6 +112,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   ngOnInit() {
     //console.log("features-grid initialized.");
     this.config = this.configService.getConfig();
+    this.gridAddToWatchlistImageSrc = this.configService.getBaseHref() + "/assets/images/clear_all.svg";
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.parentLayer.url.split("?");
@@ -546,6 +560,19 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     //this.agGrid.api.setRowData(this.rowData);
   }
 
+  handleAddToWatchlist(event) {
+    let selectedItems = this.gridApi.getSelectedRows();
+
+    if (selectedItems.length > 0) {
+      this.confirmDialogVisible = true;
+    }
+  }
+
+  handleConfirm(event) {
+    console.log("... handleConfirm");
+    this.confirmDialogVisible = false;
+  }
+
   onFirstDataRendered(params) {
   }
 
@@ -678,7 +705,10 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     var selectedRows = this.gridApi.getSelectedRows();
 
     if (selectedRows.length > 0) {
+      this.divAddToWatchlistCss.display = 'unset';
       this.plotTemporaryMarker(selectedRows[0]);
+    } else {
+      this.divAddToWatchlistCss.display = 'none';
     }
   }
 

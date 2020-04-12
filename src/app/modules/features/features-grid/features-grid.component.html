@@ -1,4 +1,19 @@
 <div style="width: 100%; height: calc(100vh - 115px);">
+  <p-dialog [(visible)]="confirmDialogVisible">
+    <p-header>
+      {{confirmDialogHeader}}
+    </p-header>
+    {{confirmDialogContent}}
+    <p-footer>
+      <button type="button" pButton icon="pi pi-check" (click)="handleConfirm($event)" label="All"></button>
+      <button type="button" pButton icon="pi pi-times" (click)="confirmDialogVisible=false" label="No" class="ui-button-secondary"></button>
+    </p-footer>
+  </p-dialog>
+  <span style="z-index: 3; float: right; position: absolute; right: 0%;">
+    <div #gridAddToWatchlist id="gridAddToWatchlist" [ngStyle]="divAddToWatchlistCss" (click)="handleAddToWatchlist($event)">
+      <img src="{{gridAddToWatchlistImageSrc}}" title="Add selected items to watchlist...">
+    </div>
+  </span>
   <span #queryStatus [ngStyle]="divQueryStatusCss">
     {{queryStatusMessage}}
   </span>

@@ -1,2 +1,8 @@
-:host /deep/ .ui-inputtext {padding:0;}
-:host /deep/ .ui-dropdown {min-width: 50px; width:200px;margin-right:5px;}
+:host /deep/ .ui-inputtext {
+    padding:0;
+}
+:host /deep/ .ui-dropdown {
+    min-width: 50px; 
+    width:200px;
+    margin-right:5px;
+}

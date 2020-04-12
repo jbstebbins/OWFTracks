@@ -63,12 +63,15 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   divRefreshCss = {
-    'z-index': 3,
     'background-color': 'gray',
     'border': '1px solid #d3d3d3',
-    'float': 'right',
-    'position': 'absolute',
-    'right': '80%'
+    'float': 'right'
+  }
+
+  divClearCss = {
+    'background-color': 'gray',
+    'border': '1px solid #d3d3d3',
+    'float': 'right'
   }
 
   divLayerRefreshCss = {
@@ -81,6 +84,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
   layerSearchImageSrc = "/OWFTracks/assets/images/close.svg";
   gridRefreshImageSrc = "/OWFTracks/assets/images/layer-show.png";
+  gridClearImageSrc = "/OWFTracks/assets/images/clear_all.svg";
   searchText = "";
 
   layersPublished: boolean = false;
@@ -89,7 +93,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   layerFieldsId: string;
   layerFieldsTitle: string;
 
-  layers: any[] = [{title: "-- SELECT LAYER --", uuid: null}];
+  layers: any[] = [{ title: "-- SELECT LAYER --", uuid: null }];
   layersDefinition: any[] = [];
   layerSelected: Track;
 
@@ -117,6 +121,11 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   rowSelection = "multiple";
 
   rowDataMonitor: any[] = [];
+
+  confirmDialogVisible: boolean = false;
+  confirmDialogSelected: boolean = false;
+  confirmDialogHeader = "Watchlist Update";
+  confirmDialogContent = "Remove all items from watchlist?"
 
   constructor(private _zone: NgZone,
     private configService: ConfigService,
@@ -183,6 +192,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/refresh.svg";
     this.layerSearchImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
     this.gridRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/layer-show.png";
+    this.gridClearImageSrc = this.configService.getBaseHref() + "/assets/images/clear_all.svg";
 
     this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(
       mapView => {
@@ -386,7 +396,9 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
                   if (this.layers.length === 1) {
                     this.selectedLayer({ originalEvent: null, value: newItem });
                   } else {
-                    this.loadComponent = true;
+                    if (this.layerSelected.title !== "-- SELECT LAYER --") {
+                      this.loadComponent = true;
+                    }
                   }
                 });
               }
@@ -561,9 +573,11 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.columnDefinitionsMonitor = [
       { field: 'id', hide: true },
       { headerName: 'Watch List', field: 'title', sortable: true, dndSource: true, resizable: true },
-      { field: 'name', hide: true },
-      { field: 'service', hide: true },
-      { field: 'uuid', hide: true }
+      { headerName: 'Layer', field: 'name', sortable: true, resizable: true },
+      { field: 'esriOIDFieldname', resizable: true },
+      { field: 'esriOIDValue', resizable: true },
+      { field: 'esriTitleFieldname', resizable: true },
+      { field: 'service', hide: true }
     ];
 
     return this.columnDefinitionsMonitor;
@@ -594,9 +608,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           if (model.value !== undefined) {
             let records = JSON.parse(model.value);
             // check all records to make sure they are not in the serviceurl/token list
-            let urlArray = [], urlParamArray = [], urlParams = "", index = 0;
+            let urlArray = [], urlParamArray = [], urlParams = "", index = 0, watchItem = [];
             this.config.tokenServices.forEach((token) => {
               records.forEach((record) => {
+                // fix the record watch list name to remove extra items
+                watchItem = record.title.split(/\(.*\)\//);
+                record.title = watchItem[0];
+
+                // fix the token on save watch items
                 if (record.service.url.includes(token.serviceUrl)) {
                   urlArray = record.service.url.split("?");
                   urlParamArray = urlArray[1].split("&");
@@ -715,16 +734,16 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
     let newItem = {
       id: this.jsutils.uuidv4(),
-      title: data[this.layerFieldsTitle] + " (" + this.layerSelected.title + ")" + "/" + data[this.layerFieldsId],
+      title: data[this.layerFieldsTitle],
       name: this.layerSelected.title,
       esriOIDFieldname: this.layerFieldsId,
       esriOIDValue: data[this.layerFieldsId],
       esriTitleFieldname: this.layerFieldsTitle,
-      service: ""
+      service: { url: "" }
     };
 
     this.layersDefinition.forEach((layer) => {
-      if (layer.uuid == this.layerSelected.uuid) {
+      if (layer.uuid === this.layerSelected.uuid) {
         newItem.service = layer;
       }
     });
@@ -732,7 +751,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     // do nothing if row is already in the grid, otherwise we would have duplicates
     let duplicateRow = false;
     this.rowDataMonitor.forEach((row) => {
-      if ((row.service === newItem.service) && (row.title === newItem.title)) {
+      if ((row.service.url === newItem.service.url) && (row.title === newItem.title)) {
         duplicateRow = true;
       }
     });
@@ -743,6 +762,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       this.rowDataMonitor = records;
 
       this.divRefreshCss["background-color"] = "red";
+      this.saveWatchlist();
     } else {
       console.log("duplicate row, skipping.");
     }
@@ -787,6 +807,55 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
 
     this.divRefreshCss["background-color"] = "red";
+    this.saveWatchlist();
+  }
+
+  clearWatchlist(event?) {
+    let selectedItems = this.gridApi.getSelectedRows();
+
+    if (selectedItems.length > 0) {
+      this.confirmDialogSelected = true;
+      this.confirmDialogContent = "Remove all or selected items from watchlist?";
+    } else {
+      this.confirmDialogSelected = false;
+      this.confirmDialogContent = "Remove all items from watchlist?";
+    }
+    this.confirmDialogVisible = true;
+  }
+
+  handleConfirmAll(event) {
+    this.confirmDialogVisible = false;
+
+    this.rowDataMonitor = [];
+    this.divRefreshCss["background-color"] = "gray";
+
+    this.saveWatchlist();
+  }
+
+  handleConfirmSelected(event) {
+    let selectedItems = this.gridApi.getSelectedRows();
+    let rowIds = [];
+    let records = [];
+
+    this.confirmDialogVisible = false;
+    
+    // collect all the rows
+    if (selectedItems.length > 0) {
+      selectedItems.forEach((row) => {
+        rowIds.push(row.id);
+      });
+
+      // find the record to remove
+      this.rowDataMonitor.forEach((row, index) => {
+        if (rowIds.indexOf(row.id) !== -1) {
+        } else {
+          records.push(row);
+        }
+      });
+
+      this.rowDataMonitor = records;
+      this.divRefreshCss["background-color"] = "red";
+    }
   }
 
   publishLayers(event?) {
@@ -853,20 +922,22 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
             }
           }
         }, 1500);
-
-        // save the current state of the active list
-        let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
-          "active.state.version", this.config.stateVersion);
-        let saveSettings = saveSettingsObservable.subscribe(model => {
-          saveSettings.unsubscribe();
-        });
-        saveSettingsObservable = this.preferencesService.setPreference("track.search.filter",
-          "active.state", this.rowDataMonitor);
-        saveSettings = saveSettingsObservable.subscribe(model => {
-          saveSettings.unsubscribe();
-        });
       }
     }
+  }
+
+  saveWatchlist() {
+    // save the current state of the active list
+    let saveSettingsObservable: Observable<any> = this.preferencesService.setPreference("track.search.filter",
+      "active.state.version", this.config.stateVersion);
+    let saveSettings = saveSettingsObservable.subscribe(model => {
+      saveSettings.unsubscribe();
+    });
+    saveSettingsObservable = this.preferencesService.setPreference("track.search.filter",
+      "active.state", this.rowDataMonitor);
+    saveSettings = saveSettingsObservable.subscribe(model => {
+      saveSettings.unsubscribe();
+    });
   }
 
   publishLayersLocationFinder(layer) {

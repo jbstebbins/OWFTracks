@@ -1,2 +1,12 @@
-:host /deep/ .ui-inputtext {padding:0;}
-:host /deep/ .ui-dropdown {min-width: 50px; width:200px;margin-right:5px;}
+:host ::ng-deep .ui-button {
+    margin: .5em .5em .5em 0;
+    width: 140px;
+}
+:host /deep/ .ui-inputtext {
+    padding:0;
+}
+:host /deep/ .ui-dropdown {
+    min-width: 50px; 
+    width:200px;
+    margin-right:5px;
+}

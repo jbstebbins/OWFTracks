@@ -1,5 +1,16 @@
 <div class="container"
   style="background-color: #428bca;color: white;max-width: unset;width:100%;margin: unset;height: 65px;font-size: 12px;">
+  <p-dialog [(visible)]="confirmDialogVisible">
+    <p-header>
+      {{confirmDialogHeader}}
+    </p-header>
+    {{confirmDialogContent}}
+    <p-footer>
+      <button type="button" pButton icon="pi pi-check" (click)="handleConfirmAll($event)" label="All"></button>
+      <button *ngIf="confirmDialogSelected" type="button" pButton icon="pi pi-check" (click)="handleConfirmSelected($event)" label="Selected"></button>
+      <button type="button" pButton icon="pi pi-times" (click)="confirmDialogVisible=false" label="No" class="ui-button-secondary"></button>
+    </p-footer>
+  </p-dialog>
   <div class="row">
     <div class="col-9" style="margin-top: 5px;padding: unset;text-align: center;">
       <div style="height: 22px;">Layer:
@@ -36,9 +47,14 @@
   </div>
 </div>
 <div class="row" style="margin: unset;">
-  <div #gridRefresh id="gridRefresh" [ngStyle]="divRefreshCss" (click)="publishLayers($event)">
-    <img src="{{gridRefreshImageSrc}}" title="Resync with map...">
-  </div>
+  <span style="z-index: 3; float: right; position: absolute; right: 80%;">
+    <div #gridRefresh id="gridRefresh" [ngStyle]="divRefreshCss" (click)="publishLayers($event)">
+      <img src="{{gridRefreshImageSrc}}" title="Resync with map...">
+    </div>
+    <div #gridClear id="gridClear" [ngStyle]="divClearCss" (click)="clearWatchlist($event)">
+      <img src="{{gridClearImageSrc}}" title="Clear watchlist...">
+    </div>
+  </span>
   <div class="span3" style="background-color:#d0d9e7;height:calc(100vh - 115px);width: 20%;" id="leftmargin"
     (dragover)="gridDragOver($event)" (drop)="gridDragDrop($event)">
     <ag-grid-angular #agGridLYRMonitor class="ag-theme-balham" [rowData]="rowDataMonitor" [modules]="agmodules"

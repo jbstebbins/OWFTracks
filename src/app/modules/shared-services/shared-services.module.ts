@@ -9,13 +9,14 @@ import { OwfContainerService } from '../../services/owf-container.service';
 import { MapMessagesService } from '../../services/map-messages.service';
 
 @NgModule({})
-export class SharedServicesModule { 
+export class SharedServicesModule {
   static forRoot(): ModuleWithProviders {
     return {
       ngModule: SharedServicesModule,
-      providers: [ActionNotificationService, ConfigService, PreferencesService, UserCoreService, OwfContainerService, MapMessagesService]
+      providers: [ActionNotificationService, ConfigService, 
+        PreferencesService, UserCoreService, OwfContainerService, MapMessagesService]
     };
   }
- }
+}
 
 export const SharedComponents = [];

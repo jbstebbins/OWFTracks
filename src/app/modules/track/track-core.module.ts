@@ -6,6 +6,9 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { TabViewModule } from 'primeng/tabview';
 import { CardModule } from 'primeng/card';
 import { PanelModule } from 'primeng/panel';
+import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 
 import { AgGridModule } from 'ag-grid-angular';
 import { SharedServicesModule } from '../shared-services/shared-services.module';
@@ -34,6 +37,9 @@ const appRoutes: Routes = [
     TabViewModule,
     CardModule,
     PanelModule,
+    ButtonModule,
+    DropdownModule,
+    DialogModule,
     AgGridModule.withComponents([]),
     SharedServicesModule.forRoot()
   ],

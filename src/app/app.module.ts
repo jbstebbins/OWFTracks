@@ -15,6 +15,7 @@ import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
 import { MenubarModule } from 'primeng/menubar';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 
 import { MenuComponent } from './components/menu/menu.component';
 import { GrowlerComponent } from './components/growler/growler.component';
@@ -55,6 +56,7 @@ const routes: Routes = [
     MenubarModule,
     ButtonModule,
     DropdownModule,
+    DialogModule,
     TrackCoreModule,
     CsvCoreModule,
     FeaturesCoreModule,

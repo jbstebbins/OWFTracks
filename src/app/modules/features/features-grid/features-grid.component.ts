@@ -569,8 +569,13 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   }
 
   handleConfirm(event) {
-    console.log("... handleConfirm");
     this.confirmDialogVisible = false;
+
+    let selectedItems = this.gridApi.getSelectedRows();
+    this.notificationService.publisherAction({
+      action: 'LYR SELECTED ADD TO WATCH LIST', 
+      value: selectedItems
+    });
   }
 
   onFirstDataRendered(params) {

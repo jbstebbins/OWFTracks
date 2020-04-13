@@ -170,6 +170,25 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
           this.layerFieldSelected = newFields[0];
           this.layerFields = newFields;
+        } else if (payload.action === 'LYR SELECTED ADD TO WATCH LIST') {
+          let status = { duplicateRow: false, maxItemsInLayer: false };
+          let count = 0;
+
+          let records = payload.value;
+          records.forEach((record) => {
+            if (!status.maxItemsInLayer) {
+              status = this.addRecordToWatchList(record);
+
+              if (!status.maxItemsInLayer) {
+                count++;
+              }
+            }
+          });
+
+          if (count > 0) {
+            this.divRefreshCss["background-color"] = "red";
+            this.saveWatchlist();
+          }
         }
 
         this.loadStatus = "(total records-" + this.layerRecords + "/ partial view-" + this.layerPartial + ")";
@@ -732,12 +751,23 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       return;
     }
 
+    let status = this.addRecordToWatchList(data);
+
+    if (!status.duplicateRow) {
+      this.divRefreshCss["background-color"] = "red";
+      this.saveWatchlist();
+    } else {
+      console.log("duplicate row, skipping.");
+    }
+  }
+
+  addRecordToWatchList(record): any {
     let newItem = {
       id: this.jsutils.uuidv4(),
-      title: data[this.layerFieldsTitle],
+      title: record[this.layerFieldsTitle],
       name: this.layerSelected.title,
       esriOIDFieldname: this.layerFieldsId,
-      esriOIDValue: data[this.layerFieldsId],
+      esriOIDValue: record[this.layerFieldsId],
       esriTitleFieldname: this.layerFieldsTitle,
       service: { url: "" }
     };
@@ -750,22 +780,27 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
     // do nothing if row is already in the grid, otherwise we would have duplicates
     let duplicateRow = false;
+    let layerCount = 0;
     this.rowDataMonitor.forEach((row) => {
-      if ((row.service.url === newItem.service.url) && (row.title === newItem.title)) {
-        duplicateRow = true;
+      if (row.service.url === newItem.service.url) {
+        if (row.title === newItem.title) {
+          duplicateRow = true;
+        }
+        layerCount++;
       }
     });
 
-    if (!duplicateRow) {
+    if (!duplicateRow && (layerCount < 20)) {
       // store and allow user to view
       let records = [...this.rowDataMonitor, newItem];
       this.rowDataMonitor = records;
-
-      this.divRefreshCss["background-color"] = "red";
-      this.saveWatchlist();
-    } else {
-      console.log("duplicate row, skipping.");
     }
+
+    if (layerCount >= 20) {
+      window.alert('OPS Track Widget: 20 items per layer for watch list exceeded!');
+    }
+
+    return {duplicateRow: duplicateRow, maxItemsInLayer: ((layerCount >= 20) ? true : false)};
   }
 
   divDragOver(event) {
@@ -838,7 +873,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let records = [];
 
     this.confirmDialogVisible = false;
-    
+
     // collect all the rows
     if (selectedItems.length > 0) {
       selectedItems.forEach((row) => {

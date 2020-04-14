@@ -378,16 +378,16 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleMapClick($event: any): void {
-    this.showMap = !this.showMap;
-    this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
+    //this.showMap = !this.showMap;
+    //this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
 
-    if (this.showMap) {
+    //if (this.showMap) {
       this.notificationService.publisherAction({ action: 'CSV PLOT ON MAP', value: { showLabels: this.showLabels, color: this.color, showZoom: this.showZoom } });
-    } else {
-      this.owfApi.sendChannelRequest("map.feature.unplot", {
-        overlayId: "CSV-Viewer", featureId: this.filename
-      });
-    }
+    //} else {
+    //  this.owfApi.sendChannelRequest("map.feature.unplot", {
+    //    overlayId: "CSV-Viewer", featureId: this.filename
+    //  });
+    //}
   }
 
   handleResetClick($event: any): void {
@@ -397,8 +397,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleShareClick($event: any): void {
-    this.showMap = true;
-    this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
+    //this.showMap = true;
+    //this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
     
     this.notificationService.publisherAction({ action: 'CSV SAVE TO CATALOG', value: { showLabels: this.showLabels, color: this.color, showZoom: this.showZoom } });
   }

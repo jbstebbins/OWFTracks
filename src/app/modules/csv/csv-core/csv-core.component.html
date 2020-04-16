@@ -21,7 +21,7 @@
         </span>
       </span>
       <div *ngIf="loadComponent">
-        <span *ngIf="isDataValid" style="float: right;height: 22px;display: flex;">
+        <span *ngIf="isDataValid" style="float: right;height: 23px;display: flex;border-bottom:dashed;border-color:lightblue;">
           <div #layerZoom id="layerZoom" [ngStyle]="divLayerZoomCss" (click)="handleZoomClick($event)">
             <img src="{{layerZoomImageSrc}}" title="Zoom to layer..."
               style="width:20px;height:20px;padding:1px;">
@@ -35,7 +35,7 @@
           </span>
           <button pButton type="button" icon="pi pi-globe" iconPos="left" styleClass="ui-button-info"
             (click)="handleMapClick($event)" [ngStyle]="divLayerMapCss"></button>
-          <button pButton *ngIf="recordsSelected > 0" type="button" style="height: 23px;">{{recordsSelected}}</button>
+          <button pButton *ngIf="recordsSelected > 0" type="button" style="height: 22px;">{{recordsSelected}}</button>
         </span>
         <span style="float:right;margin-right:10px;">Search: <input type="text" #csvSearch name="Search CSV"
             id="csvSearch" [(ngModel)]="searchValue" (keydown)="searchListener($event)" title="Enter Search Text..."

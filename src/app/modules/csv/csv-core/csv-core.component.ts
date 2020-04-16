@@ -68,9 +68,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   divLayerMapCss = {
     'z-index': 3,
     'width': '22px',
-    'height': '23px',
-    'display': 'inline',
-    'background-color': 'gray'
+    'height': '22px',
+    'display': 'inline'
   }
 
   jsutils = new jsUtils();
@@ -397,8 +396,8 @@ export class CsvCoreComponent implements OnInit, OnDestroy {
   }
 
   handleShareClick($event: any): void {
-    //this.showMap = true;
-    //this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
+    // this.showMap = true;
+    // this.divLayerMapCss["background-color"] = (this.showMap ? "unset" : "gray");
     
     this.notificationService.publisherAction({ action: 'CSV SAVE TO CATALOG', value: { showLabels: this.showLabels, color: this.color, showZoom: this.showZoom } });
   }

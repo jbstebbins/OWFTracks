@@ -1,11 +1,11 @@
 {
-  "version": "1.1.1475",
-  "buildDate": "20200412",
+  "version": "1.1.1480",
+  "buildDate": "20200427",
   "Urls": {
     "baseUrl": "/OWFTracks",
     "refreshRate": "5000",
     "trackCount": "2000",
-    "owfServer": "https://localhost:8443/owf",
+    "owfServer": "https://10.10.30.178:8443/owf",
     "cotServiceActive": "CotServiceDev2",
     "cotServiceProd": "",
     "cotServiceStage": "https://10.10.30.178:8443/CotProviderSVC/rest/cotdummy",
@@ -17,7 +17,7 @@
     "onPlot": true,
     "onViewChange": false
   },
-  "stateVersion": "1.1",
+  "stateVersion": "1.2",
   "layerParam": {
     "defaults": {
       "serviceType": "feature",

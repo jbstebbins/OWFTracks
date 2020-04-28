@@ -1,7 +1,7 @@
-:host /deep/ .ui-inputtext {
+:host ::ng-deep .ui-inputtext {
     padding:0;
 }
-:host /deep/ .ui-dropdown {
+:host ::ng-deep .ui-dropdown {
     min-width: 50px; 
     width:200px;
     margin-right:5px;

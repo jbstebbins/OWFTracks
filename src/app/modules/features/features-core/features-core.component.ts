@@ -17,6 +17,7 @@ import { OwfApi } from '../../../library/owf-api';
 
 import { ConfigModel } from '../../../models/config-model';
 import { ConfigService } from '../../../services/config.service';
+import { UserCoreService } from '../../../services/owf-core.service';
 import { ActionNotificationService } from '../../../services/action-notification.service';
 import { PreferencesService } from '../../../services/preferences.service';
 import { MapMessagesService } from '../../../services/map-messages.service';
@@ -84,7 +85,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   layerRefreshImageSrc = "/OWFTracks/assets/images/refresh.svg";
   layerSearchImageSrc = "/OWFTracks/assets/images/close.svg";
   gridRefreshImageSrc = "/OWFTracks/assets/images/layer-show.png";
-  gridClearImageSrc = "/OWFTracks/assets/images/clear_all.svg";
+  gridClearImageSrc = "/OWFTracks/assets/images/remove.svg";
   searchText = "";
 
   layersPublished: boolean = false;
@@ -129,6 +130,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
   constructor(private _zone: NgZone,
     private configService: ConfigService,
+    private userCoreService: UserCoreService,
     private mapMessageService: MapMessagesService,
     private notificationService: ActionNotificationService,
     private preferencesService: PreferencesService,
@@ -211,7 +213,7 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     this.layerRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/refresh.svg";
     this.layerSearchImageSrc = this.configService.getBaseHref() + "/assets/images/close.svg";
     this.gridRefreshImageSrc = this.configService.getBaseHref() + "/assets/images/layer-show.png";
-    this.gridClearImageSrc = this.configService.getBaseHref() + "/assets/images/clear_all.svg";
+    this.gridClearImageSrc = this.configService.getBaseHref() + "/assets/images/remove.svg";
 
     this.mapStatusView = this.mapMessageService.getMapStatusView().subscribe(
       mapView => {
@@ -451,6 +453,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
   }
 
   private getDirectoryLayers() {
+    let userGroups = this.userCoreService.getUserGroupNames();
+
     let selectedLayer;
     this.connectionFailure = true;
     this.config.directories.forEach((directory) => {
@@ -468,102 +472,115 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
           directoryCollection.directory.forEach((services) => {
             // retrieve the directory and get layer list
             let layerType = "feature";
-            let layerParams = this.config.layerParam.defaults;
+            let layerParams;
             let layerUrl = "";
             let layerMSG, newItem;
             let urlParser, layerHost = "";
-            services.layer.services.forEach((service) => {
-              service["uuid"] = this.jsutils.uuidv4();
-              service.tempArea = {};
 
-              layerType = service.params.serviceType || services.layer.params.serviceType || "feature";
-              if (layerType === "feature") {
-                layerType = "arcgis-feature";
-
-                // process the layer into definition
-
-                // copy layer params from top level
-                if (services.layer.params) {
-                  Object.keys(services.layer.params).forEach((param) => {
-                    layerParams[param] = services.layer.params[param];
-                  });
+            // check roles to for command set option in infotemplate
+            let userAllowed = true;
+            if ((services.properties !== undefined) && (services.properties.role !== undefined)) {
+              userAllowed = false;
+              services.properties.role.forEach((role) => {
+                if (userGroups.indexOf(role.toUpperCase()) >= 0) {
+                  userAllowed = true;
                 }
+              });
+            }
 
-                // copy layer service params
-                if (service.params) {
-                  Object.keys(service.params).forEach((param) => {
-                    layerParams[param] = service.params[param];
-                  });
-                }
+            if (userAllowed) {
+              services.layer.services.forEach((service) => {
+                service["uuid"] = this.jsutils.uuidv4();
+                service.tempArea = {};
+                layerParams = JSON.parse(JSON.stringify(this.config.layerParam.defaults));
 
-                // cleanup params
-                delete layerParams.serviceType;
-                delete layerParams.url;
-                delete layerParams.data;
-                delete layerParams.zoom;
-                delete layerParams.refresh;
-                delete layerParams._comment;
-                delete layerParams.intranet;
+                layerType = service.params.serviceType || services.layer.params.serviceType || "feature";
+                if (layerType === "feature") {
+                  layerType = "arcgis-feature";
 
-                // copy the default overrides
-                if (directory.layerParam.overrides) {
-                  Object.keys(directory.layerParam.overrides).forEach((param) => {
-                    layerParams[param] = directory.layerParam.overrides[param];
-                  });
-                }
+                  // process the layer into definition
 
-                // update service url
-                layerUrl = service.url || services.properties.url;
-                if ((service.params.layers !== undefined) && (service.params.layers !== null)) {
-                  layerUrl = layerUrl +
-                    ((layerUrl.endsWith("/")) ? "" : "/") + service.params.layers;
-                }
-                if ((services.properties.token !== undefined) && (services.properties.token !== null)) {
-                  urlParser = new URL(layerUrl);
-                  layerHost = urlParser.host;
+                  // copy layer params from top level
+                  if (services.layer.params) {
+                    Object.keys(services.layer.params).forEach((param) => {
+                      layerParams[param] = services.layer.params[param];
+                    });
+                  }
 
-                  // get the token if available; else parse it
-                  this.config.tokenServices.forEach((service) => {
-                    if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
-                      (service.serviceUrl === layerHost)) {
-                      if (layerUrl.includes("?")) {
-                        layerUrl += "&token=" + service.token;
-                      } else {
-                        layerUrl += "?token=" + service.token;
+                  // copy layer service params
+                  if (service.params) {
+                    Object.keys(service.params).forEach((param) => {
+                      layerParams[param] = service.params[param];
+                    });
+                  }
+
+                  // cleanup params
+                  delete layerParams.serviceType;
+                  delete layerParams.url;
+                  delete layerParams.data;
+                  delete layerParams.zoom;
+                  delete layerParams.refresh;
+                  delete layerParams._comment;
+                  delete layerParams.intranet;
+
+                  // copy the default overrides
+                  if (directory.layerParam.overrides) {
+                    Object.keys(directory.layerParam.overrides).forEach((param) => {
+                      layerParams[param] = directory.layerParam.overrides[param];
+                    });
+                  }
+
+                  // update service url
+                  layerUrl = service.url || services.properties.url;
+                  if ((service.params.layers !== undefined) && (service.params.layers !== null)) {
+                    layerUrl = layerUrl +
+                      ((layerUrl.endsWith("/")) ? "" : "/") + service.params.layers;
+                  }
+                  if ((services.properties.token !== undefined) && (services.properties.token !== null)) {
+                    urlParser = new URL(layerUrl);
+                    layerHost = urlParser.host;
+
+                    // get the token if available; else parse it
+                    this.config.tokenServices.forEach((service) => {
+                      if ((service.serviceUrl !== undefined) && (service.serviceUrl !== null) &&
+                        (service.serviceUrl === layerHost)) {
+                        if (layerUrl.includes("?")) {
+                          layerUrl += "&token=" + service.token;
+                        } else {
+                          layerUrl += "?token=" + service.token;
+                        }
                       }
-                    }
-                  });
+                    });
+                  }
+
+                  // create the service message for layerDefinition
+                  layerMSG = {};
+                  layerMSG.overlayId = directory.name;
+                  layerMSG.featureId = service.name;
+                  layerMSG.name = service.name;
+                  layerMSG.format = layerType;
+                  layerMSG.params = layerParams;
+                  if ((service.params.zoom !== undefined) || (service.params.zoom !== null)) {
+                    layerMSG.zoom = service.params.zoom;
+                  }
+
+                  layerMSG.mapId = 1;
+                  layerMSG.url = layerUrl;
+                  layerMSG["uuid"] = service["uuid"];
+                  layerMSG.tempArea = {};
+
+                  // add the new item
+                  newItem = { title: (layerMSG.name + "/" + services.properties.title + "/" + services.properties.path), uuid: service.uuid };
+                  if (!selectedLayer) {
+                    selectedLayer = newItem;
+                  }
+
+                  // trigger angular binding
+                  this.layers = [...this.layers, newItem];
+                  this.layersDefinition = [...this.layersDefinition, layerMSG];
                 }
-
-                // create the service message for layerDefinition
-                layerMSG = {};
-                layerMSG.overlayId = directory.name;
-                layerMSG.featureId = service.name;
-                layerMSG.name = service.name;
-                layerMSG.format = layerType;
-                layerMSG.params = layerParams;
-                if ((service.params.zoom !== undefined) || (service.params.zoom !== null)) {
-                  layerMSG.zoom = service.params.zoom;
-                }
-
-                layerMSG.mapId = 1;
-                layerMSG.url = layerUrl;
-                layerMSG["uuid"] = service["uuid"];
-                layerMSG.tempArea = {};
-
-                // check roles to for command set option in infotemplate
-
-                // add the new item
-                newItem = { title: (layerMSG.name + "/" + layerMSG.overlayId), uuid: service.uuid };
-                if (!selectedLayer) {
-                  selectedLayer = newItem;
-                }
-
-                // trigger angular binding
-                this.layers = [...this.layers, newItem];
-                this.layersDefinition = [...this.layersDefinition, layerMSG];
-              }
-            });
+              });
+            }
           });
 
           // save the list to memory store
@@ -617,7 +634,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
       restoreSettings.unsubscribe();
 
-      if ((model.value === undefined) || (model.value === null) || (model.value === "")) {
+      if ((model.value === undefined) || (model.value === null) || (model.value === "") || 
+          (model.value !== "\"" + this.config.stateVersion + "\"")) {
       } else {
         restoreSettingsObservable = this.preferencesService.getPreference("track.search.filter",
           "active.state");
@@ -772,6 +790,14 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
       service: { url: "" }
     };
 
+    // check if mmsi is in the attribute list
+    Object.keys(record).forEach((field) => {
+      if (field.toUpperCase() === "MMSI") {
+        newItem.esriOIDFieldname = field;
+        newItem.esriOIDValue = record[field];
+      }
+    });
+   
     this.layersDefinition.forEach((layer) => {
       if (layer.uuid === this.layerSelected.uuid) {
         newItem.service = layer;
@@ -797,10 +823,10 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     }
 
     if (layerCount >= 20) {
-      window.alert('OPS Track Widget: 20 items per layer for watch list exceeded!');
+      window.alert('OPS Track Widget: (' + newItem.name + '/' + newItem.title + ') - 20 items per layer for watch list exceeded!');
     }
 
-    return {duplicateRow: duplicateRow, maxItemsInLayer: ((layerCount >= 20) ? true : false)};
+    return { duplicateRow: duplicateRow, maxItemsInLayer: ((layerCount >= 20) ? true : false) };
   }
 
   divDragOver(event) {

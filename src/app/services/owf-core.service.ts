@@ -36,8 +36,9 @@ export class UserCoreService {
 
   summaryObservable: Observable<UserSummaryModel[]> = null;
   summary: UserSummaryModel[] = null;
-  groupsObservable: Observable<UserGroupModel[]> = null;
-  groups: UserGroupModel[] = null;
+  groupsObservable: Observable<UserGroupModel> = null;
+  groups: UserGroupModel = null;
+  groupNames: string[] = null;
   dashboardsObservable: Observable<UserDashboardModel> = null;
   dashboards: UserDashboardModel = null;
   widgetsObservable: Observable<UserWidgetModel[]> = null;
@@ -167,8 +168,7 @@ export class UserCoreService {
   retrieveUserSummary() {
     const httpOptions = {
       headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa('testAdmin1:password')
+        'Content-Type': 'application/json'
       })
     };
 
@@ -187,23 +187,43 @@ export class UserCoreService {
   getUserGroups() {
     return this.groups;
   }
+  getUserGroupNames() {
+    if (this.groupNames === null) {
+      let userGroupsRaw = this.getUserGroups();
+      let userGroups = [];
+      userGroupsRaw.data.forEach((group) => {
+        if (group.status === "active") {
+          userGroups.push(group.name.toUpperCase());
+        }
+      });
+
+      // fix default OWF_Users
+      if (userGroups.indexOf("OWF USERS") < 0) {
+        userGroups.push("OWF USERS");
+      }
+
+      this.groupNames = userGroups;
+    }
+
+    return this.groupNames;
+  }
 
   retrieveUserGroups() {
     const httpOptions = {
       headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa('testAdmin1:password')
+        'Content-Type': 'application/json'
       })
     };
 
     this.groupsObservable = this.http
-      .get<UserGroupModel[]>(this.owfUrl + '/group?user_id=' + this.user.id, httpOptions)
+      .get<UserGroupModel>(this.owfUrl + '/group?user_id=' + this.user.id, httpOptions)
       .pipe(
         catchError(this.handleError('getUserGroups', [])),
         tap(console.log));
 
     this.groupsObservable.subscribe(groups => {
-      this.groups = groups;
+      this.groups = new UserGroupModel(groups.data, groups.results);
+
       this.notificationService.publisherAction({ action: 'USERINFO READY - GROUPS', value: this.groups });
     });
   }

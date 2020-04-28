@@ -51,7 +51,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
     'float': 'right',
     'display': 'none'
   }
-  gridAddToWatchlistImageSrc = "/OWFTracks/assets/images/clear_all.svg";
+  gridAddToWatchlistImageSrc = "/OWFTracks/assets/images/add.svg";
 
   credentialsRequired: boolean = false;
   connectionFailure: boolean = false;
@@ -112,7 +112,7 @@ export class FeaturesGridComponent implements OnInit, OnDestroy {
   ngOnInit() {
     //console.log("features-grid initialized.");
     this.config = this.configService.getConfig();
-    this.gridAddToWatchlistImageSrc = this.configService.getBaseHref() + "/assets/images/clear_all.svg";
+    this.gridAddToWatchlistImageSrc = this.configService.getBaseHref() + "/assets/images/add.svg";
 
     // split the url and extract the token (if provided)
     let urlArray = [] = this.parentLayer.url.split("?");

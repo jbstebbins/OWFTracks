@@ -634,8 +634,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     let restoreSettings = restoreSettingsObservable.subscribe(model => {
       restoreSettings.unsubscribe();
 
-      if ((model.value === undefined) || (model.value === null) || (model.value === "") || 
-          (model.value !== "\"" + this.config.stateVersion + "\"")) {
+      if ((model.value === undefined) || (model.value === null) || (model.value === "") ||
+        (model.value !== "\"" + this.config.stateVersion + "\"")) {
       } else {
         restoreSettingsObservable = this.preferencesService.getPreference("track.search.filter",
           "active.state");
@@ -791,13 +791,13 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
     };
 
     // check if mmsi is in the attribute list
-    Object.keys(record).forEach((field) => {
-      if (field.toUpperCase() === "MMSI") {
-        newItem.esriOIDFieldname = field;
-        newItem.esriOIDValue = record[field];
-      }
-    });
-   
+    //Object.keys(record).forEach((field) => {
+    //  if (field.toUpperCase() === "MMSI") {
+    //    newItem.esriOIDFieldname = field;
+    //    newItem.esriOIDValue = record[field];
+    //  }
+    //});
+
     this.layersDefinition.forEach((layer) => {
       if (layer.uuid === this.layerSelected.uuid) {
         newItem.service = layer;
@@ -934,12 +934,17 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
         (this.divRefreshCss["background-color"] === "red") ||
         (this.divRefreshCss["background-color"] === "green")) {
         this.divRefreshCss["background-color"] = "orange";
-        this.owfApi.sendChannelRequest('map.overlay.remove', 'LYR-WatchList');
+        this.owfApi.sendChannelRequest('map.overlay.remove', { 'overlayId': 'LYR-WatchList' });
 
+        let layerName = "";
         this.rowDataMonitor.forEach((row, index) => {
-          layerId = "LYR-WatchList-" + row.service.featureId.replace(/[^a-zA-Z0-9]/g, "");
+          layerName = row.service.featureId.replace(/[^a-zA-Z0-9 ]/g, "") + "/" +
+            row.name.replace(/[^\/a-zA-Z0-9 ]/g, "");
+
+          layerId = "LYR-WatchList-" + layerName;
           if (services[layerId] === undefined) {
             service = {
+              name: layerName,
               service: row.service,
               esriOIDFieldname: row.esriOIDFieldname,
               idList: [row.esriOIDValue]
@@ -959,8 +964,8 @@ export class FeaturesCoreComponent implements OnInit, OnDestroy {
 
           plotMessage = {
             "overlayId": "LYR-WatchList",
-            "featureId": layer,
-            "name": value.service.name,
+            "featureId": value.name.replace(/[^a-zA-Z0-9]/g, ""),
+            "name": value.name,
             "format": "arcgis-feature",
             "params": value.service.params,
             "mapId": 1,
